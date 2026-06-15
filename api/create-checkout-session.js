@@ -32,9 +32,7 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'Non autorizzato' });
     }
 
-    // TEST LIVE: addebito fisso minimo di 1€ mentre validiamo il flusso pagamenti.
-    // Quando vuoi il prezzo reale, sostituisci con: Math.round(Number(order.price) * 100)
-    const amount = 100;
+    const amount = Math.round(Number(order.price) * 100);
     if (!amount || amount < 50) return res.status(400).json({ error: 'Prezzo non valido' });
 
     const baseUrl = process.env.PUBLIC_SITE_URL || 'https://www.consegnah24.it';
@@ -50,7 +48,7 @@ module.exports = async function handler(req, res) {
             currency: 'eur',
             unit_amount: amount,
             product_data: {
-              name: 'Consegna24 - test pagamento consegna',
+              name: 'Consegna24 - pagamento consegna',
               description: `${order.pickup_address || ''} → ${order.delivery_address || ''}`.slice(0, 250)
             }
           }
