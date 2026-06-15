@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ error: 'Non autorizzato' });
     }
 
-    const amount = Math.round(Number(order.price) * 100);
+    const amount = Math.max(899, Math.round(Number(order.price || 0) * 100));
     if (!amount || amount < 50) return res.status(400).json({ error: 'Prezzo non valido' });
 
     const baseUrl = process.env.PUBLIC_SITE_URL || 'https://www.consegnah24.it';
@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
             currency: 'eur',
             unit_amount: amount,
             product_data: {
-              name: 'Consegna24 - pagamento consegna',
+              name: 'Consegna24 - consegna',
               description: `${order.pickup_address || ''} → ${order.delivery_address || ''}`.slice(0, 250)
             }
           }
