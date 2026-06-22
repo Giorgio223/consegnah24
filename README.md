@@ -31,3 +31,18 @@ sql/001_add_delivery_confirmation_fields.sql
 - `package.json`
 
 Telegram notifications are not added yet, per request. They can be added later after creating the bot and getting the chat ID.
+
+
+## Telegram notifications
+
+Per ricevere in Telegram ogni nuova consegna creata dai clienti:
+
+1. Crea un bot con @BotFather e copia il token.
+2. Scrivi almeno un messaggio al bot dal tuo account Telegram.
+3. Apri `https://api.telegram.org/bot<TOKEN>/getUpdates` e copia il tuo `chat.id`.
+4. Su Vercel aggiungi queste Environment Variables:
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+5. Redeploy del progetto.
+
+Quando un cliente salva una consegna, il sito chiama `/api/send-telegram-notification` e invia in chat tutti i dati dell’ordine.
