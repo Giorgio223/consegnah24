@@ -181,7 +181,7 @@
       $.orderStatus.className='hint';
       const user=await getUser();
       if(!user){$.priceModal.classList.remove('show');openAuth('login');$.authStatus.textContent='Prima accedi o registrati, poi salvi la consegna.';return null}
-      const payload={user_email:user.email,pickup_address:quote.from,delivery_address:quote.to,sender_name:$.senderName.value.trim(),sender_phone:$.senderPhone.value.trim(),receiver_name:$.receiverName.value.trim(),receiver_phone:$.receiverPhone.value.trim(),package_description:$.packageText.value.trim(),delivery_slot:$.deliverySlot.value,price:Number(quote.price.toFixed(2)),status:paymentMethod==='cash'?'in gestione':'non pagato',payment_status:paymentMethod==='cash'?'cash_on_delivery':'pending'};
+      const payload={user_email:user.email,pickup_address:quote.from,delivery_address:quote.to,sender_name:$.senderName.value.trim(),sender_phone:$.senderPhone.value.trim(),receiver_name:$.receiverName.value.trim(),receiver_phone:$.receiverPhone.value.trim(),package_description:$.packageText.value.trim(),delivery_slot:$.deliverySlot.value,price:Number(quote.price.toFixed(2)),status:'🚚 Corriere in arrivo',payment_status:paymentMethod==='cash'?'cash_on_delivery':'pending'};
       const {data:inserted,error}=await db.from('orders').insert(payload).select('id').single();
       if(error)throw error;
       notifyTelegramNewOrder(inserted.id);
@@ -195,9 +195,10 @@
       if(st.includes('annull'))return {text:'annullato',cls:'red'};
       if(st.includes('consegnato'))return {text:'consegnato!',cls:'green'};
       if(st.includes('in consegna'))return {text:'in consegna',cls:'blue'};
-      if(st.includes('in gestione')||st.includes('presa in gestione'))return {text:'in gestione',cls:'yellow'};
-      if(payment==='paid')return {text:'pagato...stiamo arrivando!',cls:'green'};
-      if(payment==='cash_on_delivery')return {text:'paga al ritiro',cls:'yellow'};
+      if(st.includes('corriere in arrivo'))return {text:'🚚 Corriere in arrivo',cls:'yellow'};
+      if(st.includes('in gestione')||st.includes('presa in gestione'))return {text:'🚚 Corriere in arrivo',cls:'yellow'};
+      if(payment==='paid')return {text:'🚚 Corriere in arrivo',cls:'yellow'};
+      if(payment==='cash_on_delivery')return {text:'🚚 Corriere in arrivo',cls:'yellow'};
       if(payment==='pending'||payment==='checkout_created'||st.includes('non pagato'))return {text:'Non pagato',cls:'red'};
       return {text:'in gestione',cls:'yellow'};
     }
@@ -208,7 +209,7 @@
       const date=o.created_at?new Date(o.created_at).toLocaleString('it-IT'):'-';
       const sv=statusView(o.status,o.payment_status);
       const deliveredBlock=(o.delivered_to||o.delivered_at)?`<br><b>Consegnato a:</b> ${esc(o.delivered_to||'-')}<br><b>Consegnato il:</b> ${esc(formatDeliveredAt(o.delivered_at))}`:'';
-      const sel=isAdmin?`<div class="field"><label>Cambia stato</label><select data-order="${esc(o.id)}"><option ${o.status==='non pagato'?'selected':''}>non pagato</option><option ${o.status==='in gestione'||o.status==='presa in gestione'?'selected':''}>in gestione</option><option ${o.status==='in consegna'?'selected':''}>in consegna</option><option ${o.status==='consegnato!'?'selected':''}>consegnato!</option><option ${o.status==='annullato'?'selected':''}>annullato</option></select></div>`:'';
+      const sel=isAdmin?`<div class="field"><label>Cambia stato</label><select data-order="${esc(o.id)}"><option value="🚚 Corriere in arrivo" ${String(o.status||'').toLowerCase().includes('corriere in arrivo')||o.status==='in gestione'||o.status==='presa in gestione'?'selected':''}>🚚 Corriere in arrivo</option><option value="in consegna" ${o.status==='in consegna'?'selected':''}>in consegna</option><option value="consegnato!" ${o.status==='consegnato!'?'selected':''}>consegnato!</option><option value="annullato" ${o.status==='annullato'?'selected':''}>annullato</option></select></div>`:'';
       return `<div class="order"><b>${esc(date)}</b> · <span class="status ${sv.cls}">${esc(sv.text)}</span><p><b>Da:</b> ${esc(o.pickup_address||'-')}<br><b>A:</b> ${esc(o.delivery_address||'-')}<br><b>Prezzo:</b> ${esc(euro(o.price))}<br><b>Fascia:</b> ${esc(o.delivery_slot||'-')}<br><b>Pagamento:</b> ${esc(paymentText(o.payment_status))}<br><b>Mittente:</b> ${esc(o.sender_name||'-')} · ${esc(o.sender_phone||'-')}<br><b>Destinatario:</b> ${esc(o.receiver_name||'-')} · ${esc(o.receiver_phone||'-')}<br><b>Oggetto:</b> ${esc(o.package_description||'-')}${deliveredBlock}${isAdmin?`<br><b>Cliente:</b> ${esc(o.user_email||'-')}`:''}</p>${sel}</div>`
     }
     function renderOrders(isAdmin){

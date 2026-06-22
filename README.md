@@ -46,3 +46,23 @@ Per ricevere in Telegram ogni nuova consegna creata dai clienti:
 5. Redeploy del progetto.
 
 Quando un cliente salva una consegna, il sito chiama `/api/send-telegram-notification` e invia in chat tutti i dati dell’ordine.
+
+
+## Aggiornamento stato iniziale
+Quando un cliente crea una nuova consegna, lo stato iniziale viene salvato come:
+
+```
+🚚 Corriere in arrivo
+```
+
+L'admin può poi cambiarlo manualmente in `in consegna`, `consegnato!` o `annullato`.
+
+## Telegram notifiche
+Per ricevere notifiche Telegram sui nuovi ordini, imposta su Vercel / hosting queste variabili:
+
+```env
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=581727401
+```
+
+Non inserire il token Telegram direttamente in `index.html`: deve restare nelle Environment Variables del server.
