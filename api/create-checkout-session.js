@@ -48,8 +48,8 @@ module.exports = async function handler(req, res) {
             currency: 'eur',
             unit_amount: amount,
             product_data: {
-              name: 'Consegna24 - consegna express',
-              description: `${order.pickup_address || ''} → ${order.delivery_address || ''}${order.delivery_slot ? ' · ' + order.delivery_slot : ''}`.slice(0, 250)
+              name: 'Consegna24 - pagamento consegna',
+              description: `${order.pickup_address || ''} → ${order.delivery_address || ''}`.slice(0, 250)
             }
           }
         }

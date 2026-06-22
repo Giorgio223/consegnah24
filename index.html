@@ -72,6 +72,7 @@
   <div class="modalLayer" id="authModal"><div class="modal small"><div class="modalHead"><div><h2 id="authTitle">Login</h2><p class="hint" style="margin:6px 0 0">Accedi o crea un account per salvare la consegna.</p></div><button class="x" data-close="authModal">×</button></div><form class="modalBody" id="authForm"><div class="field" id="nameWrap"><label>Nome</label><input id="nameInput" placeholder="Il tuo nome"></div><div class="field"><label>Email</label><input id="emailInput" type="email" required placeholder="email@esempio.it"></div><div class="field"><label>Password</label><input id="passwordInput" type="password" required placeholder="Password"></div><button class="mainBtn" id="authSubmit" type="submit">Accedi</button><p class="authInfo" id="authStatus"></p></form></div></div>
   <div class="modalLayer" id="priceModal"><div class="modal"><div class="modalHead"><div><h2>Riepilogo consegna</h2><p class="hint" style="margin:6px 0 0">Completa i dati e salva la richiesta.</p></div><button class="x" data-close="priceModal">×</button></div><div class="modalBody"><div class="summary"><div class="box"><span>Da</span><strong id="sumFrom">-</strong></div><div class="box"><span>A</span><strong id="sumTo">-</strong></div><div class="box price"><span>Prezzo</span><strong id="sumPrice">-</strong><small id="sumKm"></small></div></div><form id="orderForm"><div class="grid2"><section class="inner"><h3>Chi manda</h3><div class="field"><label>Nome e cognome</label><input id="senderName" required placeholder="Nome mittente"></div><div class="field"><label>Telefono</label><input id="senderPhone" required type="tel" placeholder="Telefono mittente"></div></section><section class="inner"><h3>Chi riceve</h3><div class="field"><label>Nome e cognome</label><input id="receiverName" required placeholder="Nome destinatario"></div><div class="field"><label>Telefono</label><input id="receiverPhone" required type="tel" placeholder="Telefono destinatario"></div></section><section class="inner full"><h3>Cosa mandi?</h3><div class="field"><textarea id="packageText" required placeholder="Descrivi cosa deve essere consegnato"></textarea></div></section><section class="inner full"><h3>Fascia oraria di consegna</h3><div class="field"><label>Scegli quando vuoi ricevere la consegna</label><select id="deliverySlot" required></select></div></section></div><div class="payActions"><button class="mainBtn" type="submit">Paga online</button><button class="payCashBtn" type="button" id="cashBtn">Paga al ritiro</button></div><p class="hint" id="orderStatus"></p></form></div></div></div>
   <div class="modalLayer" id="profileModal"><div class="modal"><div class="modalHead"><div><h2 id="profileTitle">Profilo</h2><p class="hint" id="profileEmail" style="margin:6px 0 0"></p></div><button class="x" data-close="profileModal">×</button></div><div class="modalBody"><div id="ordersList"></div><button class="mainBtn secondary" id="logoutBtn" style="margin-top:18px">Logout</button></div></div></div>
+  <div class="modalLayer" id="deliveredModal"><div class="modal small"><div class="modalHead"><div><h2>A chi hai consegnato?</h2><p class="hint" style="margin:6px 0 0">Scrivi il nome della persona, dettagli utili o una breve nota di consegna. Il cliente vedrà questa informazione nel suo profilo.</p></div><button class="x" data-close="deliveredModal">×</button></div><form class="modalBody" id="deliveredForm"><div class="field"><label>Consegnato a:</label><textarea id="deliveredToInput" required placeholder="Esempio: Consegnato a Marco Rossi, portineria, ore 18:35. Firmato dal destinatario."></textarea></div><button class="mainBtn" type="submit">Conferma consegna</button><p class="hint" id="deliveredStatus"></p></form></div></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -80,7 +81,7 @@
     const ADMIN_EMAIL='angiorgio6@gmail.com';
     const el=id=>document.getElementById(id);
     const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}});
-    const $={loginBtn:el('loginBtn'),registerBtn:el('registerBtn'),profileBtn:el('profileBtn'),authModal:el('authModal'),authTitle:el('authTitle'),authForm:el('authForm'),authSubmit:el('authSubmit'),authStatus:el('authStatus'),nameWrap:el('nameWrap'),nameInput:el('nameInput'),emailInput:el('emailInput'),passwordInput:el('passwordInput'),quoteForm:el('quoteForm'),fromInput:el('fromInput'),toInput:el('toInput'),fromSuggest:el('fromSuggest'),toSuggest:el('toSuggest'),quoteStatus:el('quoteStatus'),priceModal:el('priceModal'),sumFrom:el('sumFrom'),sumTo:el('sumTo'),sumPrice:el('sumPrice'),sumKm:el('sumKm'),orderForm:el('orderForm'),senderName:el('senderName'),senderPhone:el('senderPhone'),receiverName:el('receiverName'),receiverPhone:el('receiverPhone'),packageText:el('packageText'),deliverySlot:el('deliverySlot'),orderStatus:el('orderStatus'),cashBtn:el('cashBtn'),profileModal:el('profileModal'),profileTitle:el('profileTitle'),profileEmail:el('profileEmail'),ordersList:el('ordersList'),logoutBtn:el('logoutBtn')};
+    const $={loginBtn:el('loginBtn'),registerBtn:el('registerBtn'),profileBtn:el('profileBtn'),authModal:el('authModal'),authTitle:el('authTitle'),authForm:el('authForm'),authSubmit:el('authSubmit'),authStatus:el('authStatus'),nameWrap:el('nameWrap'),nameInput:el('nameInput'),emailInput:el('emailInput'),passwordInput:el('passwordInput'),quoteForm:el('quoteForm'),fromInput:el('fromInput'),toInput:el('toInput'),fromSuggest:el('fromSuggest'),toSuggest:el('toSuggest'),quoteStatus:el('quoteStatus'),priceModal:el('priceModal'),sumFrom:el('sumFrom'),sumTo:el('sumTo'),sumPrice:el('sumPrice'),sumKm:el('sumKm'),orderForm:el('orderForm'),senderName:el('senderName'),senderPhone:el('senderPhone'),receiverName:el('receiverName'),receiverPhone:el('receiverPhone'),packageText:el('packageText'),deliverySlot:el('deliverySlot'),orderStatus:el('orderStatus'),cashBtn:el('cashBtn'),profileModal:el('profileModal'),profileTitle:el('profileTitle'),profileEmail:el('profileEmail'),ordersList:el('ordersList'),logoutBtn:el('logoutBtn'),deliveredModal:el('deliveredModal'),deliveredForm:el('deliveredForm'),deliveredToInput:el('deliveredToInput'),deliveredStatus:el('deliveredStatus')};
     let authMode='login', selected={from:null,to:null}, quote=null, map, mapMobile, routeLine, routeLine2, markers=[];
     function initMaps(){map=L.map('map',{zoomControl:true}).setView([45.4642,9.19],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);mapMobile=L.map('mapMobile',{zoomControl:false}).setView([45.4642,9.19],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapMobile)}
     const icon=c=>L.divIcon({className:'',html:`<div style="width:18px;height:18px;border-radius:50%;background:${c};border:4px solid white;box-shadow:0 8px 18px rgba(0,0,0,.25)"></div>`,iconSize:[18,18],iconAnchor:[9,9]});
@@ -173,7 +174,7 @@
     }
     $.orderForm.onsubmit=async e=>{e.preventDefault();try{const inserted=await createOrder('card');if(!inserted)return;$.orderStatus.textContent='';const {data:sessionData}=await db.auth.getSession();const token=sessionData.session?.access_token;if(!token)throw new Error('Sessione scaduta: fai login di nuovo.');const payRes=await fetch('/api/create-checkout-session',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({order_id:inserted.id})});const payJson=await payRes.json();if(!payRes.ok)throw new Error(payJson.error||'Errore Stripe');window.location.href=payJson.url}catch(err){$.orderStatus.textContent=err.message||'Errore salvataggio';$.orderStatus.className='hint error'}};
     $.cashBtn.onclick=async()=>{try{const inserted=await createOrder('cash');if(!inserted)return;$.orderStatus.textContent='Richiesta salvata. Pagamento al ritiro selezionato.';$.orderStatus.className='hint success';setTimeout(()=>{$.priceModal.classList.remove('show');openProfile()},700)}catch(err){$.orderStatus.textContent=err.message||'Errore salvataggio';$.orderStatus.className='hint error'}};
-    let profileOrders=[],profilePage=0;
+    let profileOrders=[],profilePage=0,pendingDeliveredOrderId=null,pendingDeliveredPreviousStatus=null;
     function statusView(status,payment){
       const st=(status||'').toLowerCase();
       if(st.includes('annull'))return {text:'annullato',cls:'red'};
@@ -185,10 +186,75 @@
       return {text:'in gestione',cls:'yellow'};
     }
     function paymentText(p){if(p==='paid')return 'pagato online';if(p==='cash_on_delivery')return 'pagamento al ritiro';return 'non pagato'}
-    function orderHtml(o,isAdmin){const date=o.created_at?new Date(o.created_at).toLocaleString('it-IT'):'-';const sv=statusView(o.status,o.payment_status);const sel=isAdmin?`<div class="field"><label>Cambia stato</label><select data-order="${o.id}"><option ${o.status==='non pagato'?'selected':''}>non pagato</option><option ${o.status==='in gestione'?'selected':''}>in gestione</option><option ${o.status==='in consegna'?'selected':''}>in consegna</option><option ${o.status==='consegnato!'?'selected':''}>consegnato!</option><option ${o.status==='annullato'?'selected':''}>annullato</option></select></div>`:'';return `<div class="order"><b>${date}</b> · <span class="status ${sv.cls}">${sv.text}</span><p><b>Da:</b> ${o.pickup_address||'-'}<br><b>A:</b> ${o.delivery_address||'-'}<br><b>Prezzo:</b> ${euro(o.price)}<br><b>Fascia:</b> ${o.delivery_slot||'-'}<br><b>Pagamento:</b> ${paymentText(o.payment_status)}<br><b>Mittente:</b> ${o.sender_name||'-'} · ${o.sender_phone||'-'}<br><b>Destinatario:</b> ${o.receiver_name||'-'} · ${o.receiver_phone||'-'}<br><b>Oggetto:</b> ${o.package_description||'-'}${isAdmin?`<br><b>Cliente:</b> ${o.user_email||'-'}`:''}</p>${sel}</div>`}
-    function renderOrders(isAdmin){const total=profileOrders.length;const now=new Date();const monthCount=profileOrders.filter(o=>{if(!o.created_at)return false;const d=new Date(o.created_at);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).length;const pages=Math.max(1,Math.ceil(total/5));if(profilePage>=pages)profilePage=pages-1;if(profilePage<0)profilePage=0;const slice=profileOrders.slice(profilePage*5,profilePage*5+5);let html=`<p class="hint"><b>Consegne questo mese:</b> ${monthCount}</p>`;html+=slice.length?slice.map(o=>orderHtml(o,isAdmin)).join(''):'<p class="hint">Nessuna consegna ancora.</p>';if(total>5)html+=`<div class="payActions"><button class="payCashBtn" id="prevPage" ${profilePage===0?'disabled':''}>Indietro</button><button class="payCashBtn" id="nextPage" ${profilePage>=pages-1?'disabled':''}>Avanti</button></div><p class="hint">Pagina ${profilePage+1} di ${pages}</p>`;$.ordersList.innerHTML=html;if(total>5){el('prevPage').onclick=()=>{profilePage--;renderOrders(isAdmin)};el('nextPage').onclick=()=>{profilePage++;renderOrders(isAdmin)}}if(isAdmin)document.querySelectorAll('[data-order]').forEach(s=>s.onchange=async()=>{await db.from('orders').update({status:s.value}).eq('id',s.dataset.order);openProfile()})}
-    async function openProfile(){const user=await getUser();if(!user){openAuth('login');return}const isAdmin=user.email===ADMIN_EMAIL;$.profileTitle.textContent=isAdmin?'Admin panel':'Profilo';$.profileEmail.textContent=user.email;$.ordersList.innerHTML='<p class="hint">Carico ordini...</p>';$.profileModal.classList.add('show');const {data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});if(error){$.ordersList.innerHTML='<p class="error">'+(error.message||'Load failed')+'</p>';return}profileOrders=Array.isArray(data)?data:[];profilePage=0;renderOrders(isAdmin)}
-    async function checkReturnedPayment(){const params=new URLSearchParams(location.search);const sessionId=params.get('session_id');if(params.get('payment')==='success'&&sessionId){try{await fetch('/api/verify-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId})})}catch(e){}history.replaceState({},'',location.pathname);setTimeout(openProfile,500)}}
+    function esc(v){return String(v ?? '').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}
+    function formatDeliveredAt(v){return v?new Date(v).toLocaleString('it-IT'):'-'}
+    function orderHtml(o,isAdmin){
+      const date=o.created_at?new Date(o.created_at).toLocaleString('it-IT'):'-';
+      const sv=statusView(o.status,o.payment_status);
+      const deliveredBlock=(o.delivered_to||o.delivered_at)?`<br><b>Consegnato a:</b> ${esc(o.delivered_to||'-')}<br><b>Consegnato il:</b> ${esc(formatDeliveredAt(o.delivered_at))}`:'';
+      const sel=isAdmin?`<div class="field"><label>Cambia stato</label><select data-order="${esc(o.id)}"><option ${o.status==='non pagato'?'selected':''}>non pagato</option><option ${o.status==='in gestione'||o.status==='presa in gestione'?'selected':''}>in gestione</option><option ${o.status==='in consegna'?'selected':''}>in consegna</option><option ${o.status==='consegnato!'?'selected':''}>consegnato!</option><option ${o.status==='annullato'?'selected':''}>annullato</option></select></div>`:'';
+      return `<div class="order"><b>${esc(date)}</b> · <span class="status ${sv.cls}">${esc(sv.text)}</span><p><b>Da:</b> ${esc(o.pickup_address||'-')}<br><b>A:</b> ${esc(o.delivery_address||'-')}<br><b>Prezzo:</b> ${esc(euro(o.price))}<br><b>Fascia:</b> ${esc(o.delivery_slot||'-')}<br><b>Pagamento:</b> ${esc(paymentText(o.payment_status))}<br><b>Mittente:</b> ${esc(o.sender_name||'-')} · ${esc(o.sender_phone||'-')}<br><b>Destinatario:</b> ${esc(o.receiver_name||'-')} · ${esc(o.receiver_phone||'-')}<br><b>Oggetto:</b> ${esc(o.package_description||'-')}${deliveredBlock}${isAdmin?`<br><b>Cliente:</b> ${esc(o.user_email||'-')}`:''}</p>${sel}</div>`
+    }
+    function renderOrders(isAdmin){
+      const total=profileOrders.length;
+      const now=new Date();
+      const monthCount=profileOrders.filter(o=>{if(!o.created_at)return false;const d=new Date(o.created_at);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).length;
+      const pages=Math.max(1,Math.ceil(total/5));
+      if(profilePage>=pages)profilePage=pages-1;
+      if(profilePage<0)profilePage=0;
+      const slice=profileOrders.slice(profilePage*5,profilePage*5+5);
+      let html=`<p class="hint"><b>Consegne questo mese:</b> ${monthCount}</p>`;
+      html+=slice.length?slice.map(o=>orderHtml(o,isAdmin)).join(''):'<p class="hint">Nessuna consegna ancora.</p>';
+      if(total>5)html+=`<div class="payActions"><button class="payCashBtn" id="prevPage" ${profilePage===0?'disabled':''}>Indietro</button><button class="payCashBtn" id="nextPage" ${profilePage>=pages-1?'disabled':''}>Avanti</button></div><p class="hint">Pagina ${profilePage+1} di ${pages}</p>`;
+      $.ordersList.innerHTML=html;
+      if(total>5){el('prevPage').onclick=()=>{profilePage--;renderOrders(isAdmin)};el('nextPage').onclick=()=>{profilePage++;renderOrders(isAdmin)}}
+      if(isAdmin)document.querySelectorAll('[data-order]').forEach(s=>s.onchange=()=>handleAdminStatusChange(s))
+    }
+    async function handleAdminStatusChange(select){
+      const orderId=select.dataset.order;
+      const newStatus=select.value;
+      const order=profileOrders.find(o=>String(o.id)===String(orderId));
+      const oldStatus=order?.status||'';
+      if(newStatus==='consegnato!'){
+        pendingDeliveredOrderId=orderId;
+        pendingDeliveredPreviousStatus=oldStatus;
+        $.deliveredToInput.value=order?.delivered_to||'';
+        $.deliveredStatus.textContent='';
+        $.deliveredModal.classList.add('show');
+        return;
+      }
+      await db.from('orders').update({status:newStatus}).eq('id',orderId);
+      openProfile();
+    }
+    $.deliveredForm.onsubmit=async e=>{
+      e.preventDefault();
+      const note=$.deliveredToInput.value.trim();
+      if(!pendingDeliveredOrderId||!note){$.deliveredStatus.textContent='Scrivi a chi hai consegnato.';$.deliveredStatus.className='hint error';return}
+      $.deliveredStatus.textContent='Salvo consegna...';
+      $.deliveredStatus.className='hint';
+      const {error}=await db.from('orders').update({status:'consegnato!',delivered_to:note,delivered_at:new Date().toISOString()}).eq('id',pendingDeliveredOrderId);
+      if(error){$.deliveredStatus.textContent=error.message||'Errore salvataggio';$.deliveredStatus.className='hint error';return}
+      $.deliveredModal.classList.remove('show');
+      pendingDeliveredOrderId=null;
+      pendingDeliveredPreviousStatus=null;
+      openProfile();
+    };
+    async function openProfile(){
+      const user=await getUser();
+      if(!user){openAuth('login');return}
+      const isAdmin=user.email===ADMIN_EMAIL;
+      $.profileTitle.textContent=isAdmin?'Admin panel':'Profilo';
+      $.profileEmail.textContent=user.email;
+      $.ordersList.innerHTML='<p class="hint">Carico ordini...</p>';
+      $.profileModal.classList.add('show');
+      let query=db.from('orders').select('*');
+      if(!isAdmin)query=query.eq('user_email',user.email);
+      const {data,error}=await query.order('created_at',{ascending:false});
+      if(error){$.ordersList.innerHTML='<p class="error">'+(error.message||'Load failed')+'</p>';return}
+      profileOrders=Array.isArray(data)?data:[];
+      profilePage=0;
+      renderOrders(isAdmin)
+    }
     $.profileBtn.onclick=openProfile;$.logoutBtn.onclick=async()=>{await db.auth.signOut();$.profileModal.classList.remove('show');await refreshAuth()};
     db.auth.onAuthStateChange((_event,session)=>setNav(session?.user||null));initMaps();refreshAuth();checkReturnedPayment();
   </script>
