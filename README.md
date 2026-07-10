@@ -14,3 +14,10 @@ Stati e colori:
 - rosso: `annullato`
 
 La logica Supabase, Stripe e Telegram è inclusa. Caricare tutta la struttura mantenendo le cartelle `css`, `js`, `api` e `sql`.
+
+## Ora di consegna nel profilo
+Per gli ordini con stato `Consegnato`, il profilo cliente mostra sotto il badge verde la dicitura `alle HH:MM`, usando il campo Supabase `delivered_at` già esistente.
+
+
+## Pulsante Nuova consegna
+Nella pagina `ordine.html` è presente il pulsante **Nuova consegna**, che riporta direttamente al calcolatore della pagina principale (`/#quoteForm`).

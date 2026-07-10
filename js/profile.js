@@ -71,7 +71,13 @@
     el('resultsCount').textContent=`${filtered.length} ${filtered.length===1?'consegna':'consegne'}`;
 
     el('orders').innerHTML=filtered.length
-      ? filtered.map(o=>`<article class="orderCard"><div class="orderTop"><div><div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta">${esc(fmtDate(o.created_at))} · ${esc(euro(o.price))} · ${esc(paymentText(o.payment_status))}</div></div>${statusBadge(o.status)}</div><div class="orderActions"><a class="btn primary" href="/ordine.html?id=${encodeURIComponent(o.id)}">Apri dettagli</a></div></article>`).join('')
+      ? filtered.map(o=>{
+          const status=statusInfo(o.status);
+          const deliveredTime=status.level===3&&o.delivered_at
+            ? `<span class="deliveredTime">alle ${esc(new Date(o.delivered_at).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}))}</span>`
+            : '';
+          return `<article class="orderCard"><div class="orderTop"><div><div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta">${esc(fmtDate(o.created_at))} · ${esc(euro(o.price))} · ${esc(paymentText(o.payment_status))}</div></div><div class="statusStack">${statusBadge(o.status)}${deliveredTime}</div></div><div class="orderActions"><a class="btn primary" href="/ordine.html?id=${encodeURIComponent(o.id)}">Apri dettagli</a></div></article>`;
+        }).join('')
       : '<div class="card empty">Nessuna consegna nel periodo selezionato.</div>';
   }
 
