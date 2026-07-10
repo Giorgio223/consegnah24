@@ -58,11 +58,12 @@
       return created>=from&&created<=to;
     });
 
-    const paid=filtered.filter(o=>o.payment_status==='paid'||o.payment_status==='cash_on_delivery');
-    const total=filtered.reduce((sum,o)=>sum+Number(o.price||0),0);
+    const valid=filtered.filter(o=>normalizeStatus(o.status)!=='annullato');
+    const paid=valid.filter(o=>o.payment_status==='paid'||o.payment_status==='cash_on_delivery');
+    const total=valid.reduce((sum,o)=>sum+Number(o.price||0),0);
     const rangeText=`Dal ${formatOnlyDate(from)} al ${formatOnlyDate(to)}`;
 
-    el('countAll').textContent=filtered.length;
+    el('countAll').textContent=valid.length;
     el('countPaid').textContent=paid.length;
     el('spent').textContent=euro(total);
     el('periodSummary').textContent=rangeText;

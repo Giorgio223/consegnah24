@@ -27,3 +27,17 @@ La pagina principale usa una foto ottimizzata in `assets/duomo-h24.jpg` come sfo
 
 - `Calcola la tua consegna` porta alla sezione del preventivo.
 - `Come funziona` porta alla sezione informativa.
+
+## Modifica ordini dall'admin
+Nel pannello `admin.html` ogni ordine ha ora il pulsante **Modifica**. L'amministratore può correggere:
+- indirizzo di partenza e destinazione;
+- mittente e destinatario;
+- telefoni;
+- fascia oraria;
+- prezzo;
+- stato del pagamento;
+- oggetto e note.
+
+Le modifiche vengono salvate direttamente nella stessa riga della tabella Supabase `orders`, quindi il cliente le vede subito nel profilo e nella pagina del dettaglio ordine.
+
+Gli ordini con stato **Annullato** rimangono visibili nello storico, ma non vengono conteggiati nel numero delle consegne valide né nel totale economico del profilo e dell'admin.

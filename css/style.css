@@ -39,3 +39,10 @@ html{scroll-behavior:smooth}
 .quoteSection{padding-top:24px}.quoteLayout{display:grid;grid-template-columns:minmax(340px,.8fr) 1.2fr;gap:24px;align-items:stretch}.quoteLayout .mapCard{margin-top:0;height:auto;min-height:430px}
 @media(max-width:980px){.cinemaHero{grid-template-columns:1fr;min-height:auto}.cinemaContent{padding:42px 34px 30px}.cinemaVisual{min-height:430px;background-image:linear-gradient(180deg,#07111f 0%,rgba(7,17,31,.05) 28%),url('/assets/duomo-h24.jpg');background-position:center}.quoteLayout{grid-template-columns:1fr}.quoteLayout .mapCard{min-height:320px}}
 @media(max-width:560px){.cinemaHero{border-radius:26px}.cinemaContent{padding:30px 22px 24px}.cinemaContent h1{font-size:45px}.cinemaContent>p{font-size:17px}.cinemaVisual{min-height:330px}.heroActions{display:grid}.heroCta{width:100%}.benefitItem strong{font-size:16px}.benefitItem small{font-size:13px}}
+
+/* Admin: modifica completa ordine e riepilogo economico */
+.adminStats{grid-template-columns:repeat(4,1fr)}
+#editOrderStatus{margin:14px 2px 0;font-weight:800}
+#saveOrderBtn:disabled{opacity:.55;cursor:wait}
+@media(max-width:1050px){.adminStats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.adminStats{grid-template-columns:1fr}}
