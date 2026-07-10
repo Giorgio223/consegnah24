@@ -21,3 +21,9 @@ Per gli ordini con stato `Consegnato`, il profilo cliente mostra sotto il badge 
 
 ## Pulsante Nuova consegna
 Nella pagina `ordine.html` è presente il pulsante **Nuova consegna**, che riporta direttamente al calcolatore della pagina principale (`/#quoteForm`).
+
+## Nuovo hero H24
+La pagina principale usa una foto ottimizzata in `assets/duomo-h24.jpg` come sfondo visivo. I pulsanti non fanno parte dell'immagine: sono veri link HTML e quindi sono cliccabili.
+
+- `Calcola la tua consegna` porta alla sezione del preventivo.
+- `Come funziona` porta alla sezione informativa.

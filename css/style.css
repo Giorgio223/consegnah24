@@ -17,3 +17,25 @@
 .statusStack{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto}
 .deliveredTime{font-size:12px;line-height:1;color:#047857;font-weight:850;letter-spacing:.01em}
 @media(max-width:560px){.statusStack{align-items:flex-start}}
+
+/* Cinematic Milan hero with real clickable HTML controls */
+html{scroll-behavior:smooth}
+.cinemaHero{min-height:650px;border-radius:36px;overflow:hidden;background:#07111f;box-shadow:0 30px 90px rgba(2,8,23,.24);display:grid;grid-template-columns:1.02fr .98fr;position:relative;color:#fff}
+.cinemaHero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 65% 15%,rgba(26,72,119,.20),transparent 36%);pointer-events:none}
+.cinemaContent{padding:48px 20px 44px 54px;position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center}
+.cinemaContent h1{font-size:clamp(48px,5.6vw,82px);line-height:.98;letter-spacing:-.07em;margin:28px 0 20px;max-width:760px}
+.cinemaContent>p{font-size:20px;line-height:1.5;color:#e5eaf2;max-width:620px;margin:0}
+.cinemaVisual{min-height:650px;background-image:linear-gradient(90deg,#07111f 0%,rgba(7,17,31,.72) 18%,rgba(7,17,31,.04) 62%),url('/assets/duomo-h24.jpg');background-size:cover;background-position:center center;position:relative}
+.benefitList{display:grid;gap:13px;margin-top:30px;max-width:500px}
+.benefitItem{display:flex;align-items:center;gap:14px}
+.benefitIcon{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);color:var(--yellow);font-size:24px;font-weight:900;flex:0 0 auto}
+.benefitItem strong,.benefitItem small{display:block}.benefitItem strong{font-size:18px}.benefitItem small{font-size:15px;color:#d5dbe5;margin-top:3px}
+.heroActions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.heroCta{min-height:58px;padding:0 22px;border-radius:18px;display:inline-flex;align-items:center;justify-content:center;gap:13px;text-decoration:none;font-weight:950;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
+.heroCta:hover{transform:translateY(-2px)}.heroCta span{font-size:22px}
+.primaryCta{background:linear-gradient(180deg,#ffd85e,#f7bd00);color:#121826;box-shadow:0 16px 35px rgba(247,189,0,.22)}
+.secondaryCta{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#fff}
+.secondaryCta:hover{background:rgba(255,255,255,.13)}
+.quoteSection{padding-top:24px}.quoteLayout{display:grid;grid-template-columns:minmax(340px,.8fr) 1.2fr;gap:24px;align-items:stretch}.quoteLayout .mapCard{margin-top:0;height:auto;min-height:430px}
+@media(max-width:980px){.cinemaHero{grid-template-columns:1fr;min-height:auto}.cinemaContent{padding:42px 34px 30px}.cinemaVisual{min-height:430px;background-image:linear-gradient(180deg,#07111f 0%,rgba(7,17,31,.05) 28%),url('/assets/duomo-h24.jpg');background-position:center}.quoteLayout{grid-template-columns:1fr}.quoteLayout .mapCard{min-height:320px}}
+@media(max-width:560px){.cinemaHero{border-radius:26px}.cinemaContent{padding:30px 22px 24px}.cinemaContent h1{font-size:45px}.cinemaContent>p{font-size:17px}.cinemaVisual{min-height:330px}.heroActions{display:grid}.heroCta{width:100%}.benefitItem strong{font-size:16px}.benefitItem small{font-size:13px}}
