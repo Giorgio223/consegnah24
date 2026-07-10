@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
         .from('orders')
         .update({
           payment_status: 'paid',
-          status: 'in gestione',
+          status: 'Il corriere non è ancora partito',
           stripe_session_id: session.id,
           stripe_payment_intent: session.payment_intent || null
         })

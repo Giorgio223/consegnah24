@@ -41,7 +41,7 @@ function buildMessage(order) {
     `<b>Fascia:</b> ${escapeHtml(order.delivery_slot || '-')}`,
     `<b>Prezzo:</b> ${escapeHtml(euro(order.price))}`,
     `<b>Pagamento:</b> ${escapeHtml(paymentText(order.payment_status))}`,
-    `<b>Stato:</b> ${escapeHtml(order.status || '🚚 Corriere in arrivo')}`,
+    `<b>Stato:</b> ${escapeHtml(order.status || 'Il corriere non è ancora partito')}`,
     '',
     `<b>Mittente:</b> ${escapeHtml(order.sender_name || '-')} · ${escapeHtml(order.sender_phone || '-')}`,
     `<b>Destinatario:</b> ${escapeHtml(order.receiver_name || '-')} · ${escapeHtml(order.receiver_phone || '-')}`,
