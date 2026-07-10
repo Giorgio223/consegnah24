@@ -1,1 +1,83 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Profilo | Consegna24</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/style.css"></head><body><header class="topbar"><div class="shell"><a class="brand" href="/"><span class="logo">h24</span>Consegna24</a><nav class="nav"><a href="/">Nuova consegna</a><a id="adminLink" class="primary" href="/admin.html" style="display:none">Admin</a><button class="btn primary" id="logoutBtn">Logout</button></nav></div></header><main class="page"><div class="shell"><div class="pageHead"><div><h1 class="pageTitle">Il tuo profilo</h1><p class="muted" id="userEmail"></p></div></div><div class="stats"><div class="stat"><span>Consegne totali</span><strong id="countAll">—</strong></div><div class="stat"><span>Questo mese</span><strong id="countMonth">—</strong></div><div class="stat"><span>Totale ordini</span><strong id="spent">—</strong></div></div><div id="orders" class="ordersGrid"><div class="card empty">Caricamento...</div></div></div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js"></script><script src="/js/profile.js"></script></body></html>
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Profilo | Consegna24</title>
+  <link rel="icon" href="/favicon.png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="shell">
+    <a class="brand" href="/"><span class="logo">h24</span>Consegna24</a>
+    <nav class="nav">
+      <a href="/">Nuova consegna</a>
+      <a id="adminLink" class="primary" href="/admin.html" style="display:none">Admin</a>
+      <button class="btn primary" id="logoutBtn">Logout</button>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="shell">
+    <div class="pageHead">
+      <div>
+        <h1 class="pageTitle">Il tuo profilo</h1>
+        <p class="muted" id="userEmail"></p>
+      </div>
+    </div>
+
+    <section class="periodFilter" aria-labelledby="periodTitle">
+      <div class="periodFilterHead">
+        <div>
+          <h2 id="periodTitle">Periodo</h2>
+          <p class="muted">Scegli le date per aggiornare totali e storico consegne.</p>
+        </div>
+        <button class="btn ghost" type="button" id="currentMonthBtn">Mese corrente</button>
+      </div>
+      <div class="dateFilterGrid">
+        <div class="field dateField">
+          <label for="dateFrom">Dal</label>
+          <input id="dateFrom" type="date">
+        </div>
+        <div class="field dateField">
+          <label for="dateTo">Al</label>
+          <input id="dateTo" type="date">
+        </div>
+        <button class="btn yellow filterBtn" type="button" id="applyFilterBtn">Applica filtro</button>
+      </div>
+      <p class="periodSummary" id="periodSummary"></p>
+    </section>
+
+    <div class="stats">
+      <div class="stat">
+        <span>Consegne nel periodo</span>
+        <strong id="countAll">—</strong>
+      </div>
+      <div class="stat">
+        <span>Consegne pagate</span>
+        <strong id="countPaid">—</strong>
+      </div>
+      <div class="stat featuredStat">
+        <span>Totale ordini</span>
+        <strong id="spent">—</strong>
+      </div>
+    </div>
+
+    <div class="ordersSectionHead">
+      <div>
+        <h2>Storico consegne</h2>
+        <p class="muted" id="ordersRangeLabel"></p>
+      </div>
+      <strong class="resultsCount" id="resultsCount"></strong>
+    </div>
+    <div id="orders" class="ordersGrid"><div class="card empty">Caricamento...</div></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/config.js"></script>
+<script src="/js/profile.js"></script>
+</body>
+</html>
