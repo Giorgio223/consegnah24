@@ -20,3 +20,35 @@ function statusInfo(s){const n=normalizeStatus(s);if(n==='annullato')return {tex
 function statusBadge(s){const x=statusInfo(s);return `<span class="status ${x.cls}"><span class="dot"></span>${esc(x.text)}</span>`}
 function fmtDate(v){return v?new Date(v).toLocaleString('it-IT'):'-'}
 async function logout(){await db.auth.signOut();location.href='/'}
+
+
+// Tariffe Consegna24.
+// Gli account creati prima di questa data mantengono la tariffa storica.
+const NEW_TARIFF_CUTOFF='2026-07-12T14:57:29Z';
+const LEGACY_BASE_PRICE=8.99;
+const NEW_BASE_PRICE=11.99;
+const NEW_INCLUDED_KM=10;
+const NEW_EXTRA_KM_PRICE=1;
+
+function isLegacyUser(user){
+  if(!user?.created_at)return false;
+  const created=Date.parse(user.created_at);
+  const cutoff=Date.parse(NEW_TARIFF_CUTOFF);
+  return Number.isFinite(created)&&created<cutoff;
+}
+
+function calculateDeliveryPrice(distanceKm,legacy=false){
+  const distance=Math.max(0,Number(distanceKm)||0);
+  if(legacy){
+    // Tariffa storica: minimo €8,99, poi €0,90/km.
+    return Math.max(LEGACY_BASE_PRICE,distance*0.9);
+  }
+  // Nuova tariffa: €11,99 fino a 10 km, poi €1 per ogni km eccedente.
+  return NEW_BASE_PRICE+Math.max(0,distance-NEW_INCLUDED_KM)*NEW_EXTRA_KM_PRICE;
+}
+
+function tariffDescription(legacy=false){
+  return legacy
+    ? 'Tariffa cliente storico: minimo € 8,99, poi € 0,90/km.'
+    : 'Tariffa attuale: € 11,99 fino a 10 km, poi € 1,00 per ogni km aggiuntivo.';
+}

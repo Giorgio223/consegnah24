@@ -46,3 +46,5 @@ html{scroll-behavior:smooth}
 #saveOrderBtn:disabled{opacity:.55;cursor:wait}
 @media(max-width:1050px){.adminStats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.adminStats{grid-template-columns:1fr}}
+
+.tariffNote{margin:10px 0 0;padding:12px 14px;border-radius:14px;background:#fff8d6;border:1px solid #f7d85b;color:#5b4800;font-size:13px;font-weight:800;line-height:1.45}

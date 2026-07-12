@@ -41,3 +41,13 @@ Nel pannello `admin.html` ogni ordine ha ora il pulsante **Modifica**. L'amminis
 Le modifiche vengono salvate direttamente nella stessa riga della tabella Supabase `orders`, quindi il cliente le vede subito nel profilo e nella pagina del dettaglio ordine.
 
 Gli ordini con stato **Annullato** rimangono visibili nello storico, ma non vengono conteggiati nel numero delle consegne valide né nel totale economico del profilo e dell'admin.
+
+
+## Tariffe aggiornate (12 luglio 2026)
+
+- Nuovi account: € 11,99 fino a 10 km, più € 1,00 per ogni km oltre i 10 km.
+- Account creati prima del cutoff `2026-07-12T14:57:29Z`: mantengono la tariffa storica (minimo € 8,99, poi € 0,90/km).
+- Il riconoscimento del cliente storico usa `auth.users.created_at` restituito da Supabase Auth.
+- La tariffa viene ricalcolata dopo il login e nuovamente prima del salvataggio dell'ordine.
+
+Esempio nuova tariffa: 40 km = € 11,99 + 30 km × € 1,00 = € 41,99.
