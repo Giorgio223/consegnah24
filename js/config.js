@@ -19,6 +19,15 @@ function normalizeStatus(s=''){
 function statusInfo(s){const n=normalizeStatus(s);if(n==='annullato')return {text:'Annullato',cls:'red',level:-1};if(n==='consegnato!')return {text:'Consegnato',cls:'green',level:3};if(n==='in consegna')return {text:'In consegna',cls:'blue',level:2};if(n.includes('ha visto'))return {text:"Il corriere ha visto l'ordine e sta arrivando",cls:'yellow',level:1};return {text:'Il corriere non è ancora partito',cls:'gray',level:0}}
 function statusBadge(s){const x=statusInfo(s);return `<span class="status ${x.cls}"><span class="dot"></span>${esc(x.text)}</span>`}
 function fmtDate(v){return v?new Date(v).toLocaleString('it-IT'):'-'}
+function formatDeliverySlot(value){
+  const raw=String(value||'').trim();
+  const m=raw.match(/^(\d{4})-(\d{2})-(\d{2})\s*\|\s*(.+)$/);
+  if(!m)return raw||'-';
+  const date=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));
+  const label=date.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+  return `${label} · ${m[4]}`;
+}
+
 async function logout(){await db.auth.signOut();location.href='/'}
 
 

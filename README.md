@@ -51,3 +51,9 @@ Gli ordini con stato **Annullato** rimangono visibili nello storico, ma non veng
 - La tariffa viene ricalcolata dopo il login e nuovamente prima del salvataggio dell'ordine.
 
 Esempio nuova tariffa: 40 km = € 11,99 + 30 km × € 1,00 = € 41,99.
+
+
+## Aggiornamento data di consegna
+- Il cliente seleziona una data dal calendario e una fascia oraria di 2 ore.
+- La data e la fascia vengono salvate insieme nel campo `delivery_slot`, quindi non serve una nuova migrazione Supabase.
+- Le indicazioni visibili sui clienti storici/nuovi sono state rimosse, mantenendo invariata la logica tariffaria.
