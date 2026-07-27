@@ -57,3 +57,17 @@ Esempio nuova tariffa: 40 km = € 11,99 + 30 km × € 1,00 = € 41,99.
 - Il cliente seleziona una data dal calendario e una fascia oraria di 2 ore.
 - La data e la fascia vengono salvate insieme nel campo `delivery_slot`, quindi non serve una nuova migrazione Supabase.
 - Le indicazioni visibili sui clienti storici/nuovi sono state rimosse, mantenendo invariata la logica tariffaria.
+
+## Fatturato azienda (admin)
+
+Nella pagina `admin.html` è disponibile il pannello **Fatturato azienda**:
+
+- selezione del cliente tramite email;
+- selezione del periodo con calendario `Dal / Al`;
+- totale degli ordini validi e importo dovuto;
+- esclusione automatica degli ordini con stato `annullato`;
+- riepilogo per prezzo (quantità × prezzo unitario = subtotale);
+- esportazione in Excel con fogli `Riepilogo`, `Dettaglio ordini` e `Ordini annullati`;
+- stampa o salvataggio in PDF tramite il comando di stampa del browser.
+
+Il riepilogo è un documento gestionale e non sostituisce una fattura fiscale.
