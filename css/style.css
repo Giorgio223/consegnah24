@@ -58,3 +58,9 @@ html{scroll-behavior:smooth}
 .billingActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px}.billingActions .btn:disabled{opacity:.38;cursor:not-allowed}.billingNote{color:#aeb7c5;font-size:11px;margin-left:auto;max-width:310px;text-align:right}
 @media(max-width:900px){.billingFilters{grid-template-columns:1fr 1fr}.billingFilters .compactField:first-child{grid-column:1/-1}.billingApply{grid-column:1/-1}.billingBreakdownWrap{grid-template-columns:1fr}.billingNote{margin-left:0;text-align:left;max-width:none}}
 @media(max-width:560px){.billingPanel{padding:20px;border-radius:24px}.billingFilters,.billingSummary{grid-template-columns:1fr}.billingFilters .compactField:first-child,.billingApply{grid-column:auto}.billingActions{display:grid}.billingActions .btn{width:100%}.billingTotal strong{font-size:30px}}
+
+/* Gestione credenziali cliente */
+.clientManagerPanel{background:#fff;border:1px solid var(--line);border-radius:28px;padding:26px;margin:0 0 24px;box-shadow:0 16px 48px rgba(17,24,39,.07)}
+.clientManagerHead h2{margin:5px 0 6px;font-size:27px;letter-spacing:-.035em}.clientManagerHead .billingEyebrow{color:#8a6500;background:#fff4c7}
+.clientManagerGrid{display:grid;grid-template-columns:minmax(260px,1fr) auto;gap:14px;align-items:end;margin-top:16px}.clientManagerGrid .field{margin:0}.clientEditButton{min-height:52px;padding-left:24px;padding-right:24px}.clientEditButton:disabled{opacity:.45;cursor:not-allowed}.clientSecurityNote{font-size:12px;color:var(--muted);margin:13px 0 0}.confirmCheck{display:flex;gap:10px;align-items:flex-start;margin:18px 0;color:var(--ink);font-size:14px;font-weight:750;line-height:1.4}.confirmCheck input{width:18px;height:18px;margin-top:1px;accent-color:var(--yellow)}
+@media(max-width:700px){.clientManagerGrid{grid-template-columns:1fr}.clientEditButton{width:100%}}

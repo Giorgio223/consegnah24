@@ -71,3 +71,24 @@ Nella pagina `admin.html` è disponibile il pannello **Fatturato azienda**:
 - stampa o salvataggio in PDF tramite il comando di stampa del browser.
 
 Il riepilogo è un documento gestionale e non sostituisce una fattura fiscale.
+
+## Gestione email e password cliente dall’admin
+
+In `admin.html` è disponibile la sezione **Gestione clienti**. L’amministratore può selezionare un cliente, cambiare il suo indirizzo email e, facoltativamente, impostare una nuova password.
+
+La funzione server `api/update-client-credentials.js`:
+
+- verifica il token Supabase dell’amministratore;
+- mantiene lo stesso Supabase User ID;
+- aggiorna `auth.users` tramite Supabase Admin API;
+- aggiorna `orders.user_email` per conservare tutto lo storico nel profilo;
+- libera il vecchio indirizzo email, che potrà essere usato per registrare un nuovo account;
+- non espone mai `SUPABASE_SERVICE_ROLE_KEY` nel browser.
+
+Variabili Vercel richieste:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- facoltativa: `ADMIN_EMAIL` (se assente usa `angiorgio6@gmail.com`)
+
+Dopo il deploy, eseguire un nuovo deployment per rendere disponibile la funzione API.

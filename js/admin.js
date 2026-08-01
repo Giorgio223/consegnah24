@@ -19,6 +19,9 @@ let billingResult=null;
   el('billingTo').onchange=calculateBilling;
   el('downloadExcel').onclick=downloadBillingExcel;
   el('printReport').onclick=printBillingReport;
+  el('clientAccountSelect').onchange=()=>{el('openClientEdit').disabled=!el('clientAccountSelect').value};
+  el('openClientEdit').onclick=openClientEditor;
+  el('editClientForm').onsubmit=saveClientCredentials;
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove('show'));
   setDefaultBillingPeriod();
   await load();
@@ -48,6 +51,7 @@ async function load(){
   el('delivered').textContent=orders.filter(o=>normalizeStatus(o.status)==='consegnato!').length;
   el('revenue').textContent=euro(validOrders.reduce((sum,o)=>sum+Number(o.price||0),0));
   populateBillingClients();
+  populateClientAccounts();
   calculateBilling();
   render();
 }
@@ -58,6 +62,74 @@ function populateBillingClients(){
   const clients=[...new Set(orders.map(o=>(o.user_email||'').trim().toLowerCase()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   select.innerHTML='<option value="">Seleziona cliente…</option>'+clients.map(email=>`<option value="${esc(email)}">${esc(email)}</option>`).join('');
   if(clients.includes(current))select.value=current;
+}
+
+
+function populateClientAccounts(){
+  const select=el('clientAccountSelect');
+  const current=select.value;
+  const clients=[...new Set(orders.map(o=>(o.user_email||'').trim().toLowerCase()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  select.innerHTML='<option value="">Seleziona cliente…</option>'+clients.map(email=>`<option value="${esc(email)}">${esc(email)}</option>`).join('');
+  if(clients.includes(current))select.value=current;
+  el('openClientEdit').disabled=!select.value;
+}
+
+function openClientEditor(){
+  const email=el('clientAccountSelect').value.trim().toLowerCase();
+  if(!email)return;
+  el('currentClientNotice').innerHTML=`Account attuale: <strong>${esc(email)}</strong><br><small>Lo stesso User ID e tutti gli ordini verranno mantenuti.</small>`;
+  el('newClientEmail').value=email;
+  el('newClientPassword').value='';
+  el('confirmClientPassword').value='';
+  el('confirmClientChange').checked=false;
+  el('editClientStatus').textContent='';
+  el('editClientStatus').className='';
+  el('editClientModal').classList.add('show');
+}
+
+async function saveClientCredentials(event){
+  event.preventDefault();
+  const oldEmail=el('clientAccountSelect').value.trim().toLowerCase();
+  const newEmail=el('newClientEmail').value.trim().toLowerCase();
+  const password=el('newClientPassword').value;
+  const confirmPassword=el('confirmClientPassword').value;
+  const status=el('editClientStatus');
+
+  if(!oldEmail){status.textContent='Seleziona prima un cliente.';status.className='error';return}
+  if(!newEmail){status.textContent='Inserisci il nuovo indirizzo email.';status.className='error';return}
+  if(password!==confirmPassword){status.textContent='Le due password non coincidono.';status.className='error';return}
+  if(password&&password.length<8){status.textContent='La password deve contenere almeno 8 caratteri.';status.className='error';return}
+  if(newEmail===oldEmail&&!password){status.textContent='Modifica l’email oppure inserisci una nuova password.';status.className='error';return}
+  if(!el('confirmClientChange').checked){status.textContent='Conferma la modifica delle credenziali.';status.className='error';return}
+
+  const button=el('saveClientBtn');
+  button.disabled=true;
+  status.textContent='Aggiornamento account e storico ordini...';
+  status.className='muted';
+
+  try{
+    const {data:sessionData}=await db.auth.getSession();
+    const token=sessionData.session?.access_token;
+    if(!token)throw new Error('Sessione amministratore scaduta. Esegui nuovamente il login.');
+    const response=await fetch('/api/update-client-credentials',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({old_email:oldEmail,new_email:newEmail,new_password:password})
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(result.error||'Errore durante la modifica del cliente.');
+    status.textContent=`Cliente aggiornato. ${result.orders_updated||0} ordini collegati al nuovo email.${result.password_changed?' Password modificata.':''}`;
+    status.className='success';
+    el('clientAccountSelect').value='';
+    setTimeout(()=>el('editClientModal').classList.remove('show'),1000);
+    await load();
+    if(newEmail){el('clientAccountSelect').value=newEmail;el('openClientEdit').disabled=false}
+  }catch(error){
+    status.textContent=error.message||'Errore durante la modifica del cliente.';
+    status.className='error';
+  }finally{
+    button.disabled=false;
+  }
 }
 
 function dateBounds(fromValue,toValue){

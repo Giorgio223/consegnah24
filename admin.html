@@ -55,10 +55,37 @@
       </div>
     </section>
 
+
+    <section class="clientManagerPanel" id="gestioneClienti">
+      <div class="clientManagerHead">
+        <div>
+          <span class="billingEyebrow">Gestione clienti</span>
+          <h2>Modifica email e password</h2>
+          <p class="muted">Sposta lo stesso account su un nuovo indirizzo email mantenendo User ID, storico ordini, statistiche e tariffa. Il vecchio indirizzo tornerà disponibile per una nuova registrazione.</p>
+        </div>
+      </div>
+      <div class="clientManagerGrid">
+        <div class="field compactField"><label for="clientAccountSelect">Cliente attuale</label><select id="clientAccountSelect"><option value="">Seleziona cliente…</option></select></div>
+        <button class="btn yellow clientEditButton" type="button" id="openClientEdit" disabled>Modifica cliente</button>
+      </div>
+      <p class="clientSecurityNote">La modifica viene eseguita sul server. La chiave Supabase service role non viene mai inviata al browser.</p>
+    </section>
+
     <div class="adminToolbar"><input class="btn ghost" id="search" placeholder="Cerca cliente, telefono, indirizzo..."><select class="btn ghost" id="filter"><option value="">Tutti gli stati</option><option value="Il corriere non è ancora partito">Non ancora partito</option><option value="Il corriere ha visto l'ordine e sta arrivando">Corriere in arrivo</option><option value="in consegna">In consegna</option><option value="consegnato!">Consegnato</option><option value="annullato">Annullato</option></select></div>
     <div id="orders" class="ordersGrid"></div>
   </div>
 </main>
+
+
+<div class="modalLayer" id="editClientModal"><div class="modal small"><div class="modalHead"><div><h2>Modifica cliente</h2><p class="muted">L'account e tutto lo storico resteranno gli stessi.</p></div><button class="x" type="button" data-close="editClientModal">×</button></div><form class="modalBody" id="editClientForm">
+  <div class="notice" id="currentClientNotice"></div>
+  <div class="field"><label for="newClientEmail">Nuovo indirizzo email</label><input id="newClientEmail" type="email" autocomplete="off" required placeholder="nuovo@email.it"></div>
+  <div class="field"><label for="newClientPassword">Nuova password</label><input id="newClientPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Lascia vuoto per non cambiarla"></div>
+  <div class="field"><label for="confirmClientPassword">Conferma nuova password</label><input id="confirmClientPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Ripeti la nuova password"></div>
+  <label class="confirmCheck"><input type="checkbox" id="confirmClientChange" required><span>Confermo di voler modificare le credenziali di questo cliente.</span></label>
+  <button class="btn yellow fullBtn" id="saveClientBtn" type="submit">Salva nuove credenziali</button>
+  <p id="editClientStatus"></p>
+</form></div></div>
 
 <div class="modalLayer" id="editOrderModal"><div class="modal"><div class="modalHead"><div><h2>Modifica ordine</h2><p class="muted" id="editOrderId"></p></div><button class="x" type="button" data-close="editOrderModal">×</button></div><form class="modalBody" id="editOrderForm"><div class="grid2"><div class="field"><label>Indirizzo di partenza</label><input id="editPickup" required></div><div class="field"><label>Indirizzo di destinazione</label><input id="editDelivery" required></div><div class="field"><label>Nome mittente</label><input id="editSenderName"></div><div class="field"><label>Telefono mittente</label><input id="editSenderPhone" type="tel"></div><div class="field"><label>Nome destinatario</label><input id="editReceiverName"></div><div class="field"><label>Telefono destinatario</label><input id="editReceiverPhone" type="tel"></div><div class="field"><label>Fascia oraria</label><input id="editSlot"></div><div class="field"><label>Prezzo (€)</label><input id="editPrice" type="number" min="0" step="0.01" required></div><div class="field full"><label>Stato pagamento</label><select id="editPayment"><option value="pending">Non pagato</option><option value="checkout_created">Checkout creato</option><option value="paid">Pagato online</option><option value="cash_on_delivery">Pagamento al ritiro</option></select></div><div class="field full"><label>Oggetto e note</label><textarea id="editPackage"></textarea></div></div><button class="btn yellow fullBtn" id="saveOrderBtn" type="submit">Salva modifiche</button><p id="editOrderStatus"></p></form></div></div>
 <div class="modalLayer" id="deliveredModal"><div class="modal small"><div class="modalHead"><div><h2>Conferma consegna</h2><p class="muted">Indica a chi è stato consegnato.</p></div><button class="x" data-close="deliveredModal">×</button></div><form class="modalBody" id="deliveredForm"><div class="field"><label>Consegnato a</label><textarea id="deliveredToInput" required></textarea></div><button class="btn yellow fullBtn">Conferma</button><p id="deliveredStatus"></p></form></div></div>
