@@ -81,6 +81,7 @@ function openClientEditor(){
   el('newClientEmail').value=email;
   el('newClientPassword').value='';
   el('confirmClientPassword').value='';
+  el('forceClientLogout').checked=true;
   el('confirmClientChange').checked=false;
   el('editClientStatus').textContent='';
   el('editClientStatus').className='';
@@ -93,12 +94,14 @@ async function saveClientCredentials(event){
   const newEmail=el('newClientEmail').value.trim().toLowerCase();
   const password=el('newClientPassword').value;
   const confirmPassword=el('confirmClientPassword').value;
+  const forceLogout=el('forceClientLogout').checked;
   const status=el('editClientStatus');
 
   if(!oldEmail){status.textContent='Seleziona prima un cliente.';status.className='error';return}
   if(!newEmail){status.textContent='Inserisci il nuovo indirizzo email.';status.className='error';return}
   if(password!==confirmPassword){status.textContent='Le due password non coincidono.';status.className='error';return}
   if(password&&password.length<8){status.textContent='La password deve contenere almeno 8 caratteri.';status.className='error';return}
+  if(forceLogout&&!password){status.textContent='Per disconnettere tutti i dispositivi devi impostare una nuova password.';status.className='error';return}
   if(newEmail===oldEmail&&!password){status.textContent='Modifica l’email oppure inserisci una nuova password.';status.className='error';return}
   if(!el('confirmClientChange').checked){status.textContent='Conferma la modifica delle credenziali.';status.className='error';return}
 
@@ -114,11 +117,11 @@ async function saveClientCredentials(event){
     const response=await fetch('/api/update-client-credentials',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({old_email:oldEmail,new_email:newEmail,new_password:password})
+      body:JSON.stringify({old_email:oldEmail,new_email:newEmail,new_password:password,force_logout:forceLogout})
     });
     const result=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(result.error||'Errore durante la modifica del cliente.');
-    status.textContent=`Cliente aggiornato. ${result.orders_updated||0} ordini collegati al nuovo email.${result.password_changed?' Password modificata.':''}`;
+    status.textContent=`Cliente aggiornato. ${result.orders_updated||0} ordini collegati al nuovo email.${result.password_changed?' Password modificata.':''}${result.sessions_revoked?' Tutte le sessioni del cliente sono state terminate: dovrà accedere nuovamente con le nuove credenziali.':''}`;
     status.className='success';
     el('clientAccountSelect').value='';
     setTimeout(()=>el('editClientModal').classList.remove('show'),1000);

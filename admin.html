@@ -82,6 +82,7 @@
   <div class="field"><label for="newClientEmail">Nuovo indirizzo email</label><input id="newClientEmail" type="email" autocomplete="off" required placeholder="nuovo@email.it"></div>
   <div class="field"><label for="newClientPassword">Nuova password</label><input id="newClientPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Lascia vuoto per non cambiarla"></div>
   <div class="field"><label for="confirmClientPassword">Conferma nuova password</label><input id="confirmClientPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Ripeti la nuova password"></div>
+  <label class="confirmCheck forceLogoutCheck"><input type="checkbox" id="forceClientLogout" checked><span><strong>Disconnetti il cliente da tutti i dispositivi</strong><br><small>Consigliato dopo la modifica dell’email. Per motivi di sicurezza richiede l’impostazione di una nuova password. Le sessioni aperte verranno chiuse e il cliente dovrà accedere con le nuove credenziali.</small></span></label>
   <label class="confirmCheck"><input type="checkbox" id="confirmClientChange" required><span>Confermo di voler modificare le credenziali di questo cliente.</span></label>
   <button class="btn yellow fullBtn" id="saveClientBtn" type="submit">Salva nuove credenziali</button>
   <p id="editClientStatus"></p>

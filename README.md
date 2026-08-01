@@ -92,3 +92,10 @@ Variabili Vercel richieste:
 - facoltativa: `ADMIN_EMAIL` (se assente usa `angiorgio6@gmail.com`)
 
 Dopo il deploy, eseguire un nuovo deployment per rendere disponibile la funzione API.
+
+
+## Disconnessione del cliente da tutti i dispositivi
+
+Nel pannello **Gestione clienti** è presente l'opzione **Disconnetti il cliente da tutti i dispositivi**. Quando è attiva, l'amministratore deve impostare una nuova password. L'API aggiorna le credenziali, registra in `user_metadata.force_logout_after` il momento della modifica e la variazione della password invalida le sessioni di rinnovo Supabase.
+
+Tutte le pagine eseguono inoltre un controllo della sessione all'apertura, quando la scheda torna visibile e ogni minuto. Se rilevano un token emesso prima della modifica delle credenziali, effettuano il logout locale e rimandano alla pagina di accesso. Gli access token JWT già emessi possono tecnicamente restare validi fino alla loro scadenza, ma l'interfaccia forza il logout non appena il dispositivo torna attivo e riesce a contattare Supabase.

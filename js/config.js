@@ -31,6 +31,45 @@ function formatDeliverySlot(value){
 async function logout(){await db.auth.signOut();location.href='/'}
 
 
+function decodeJwtPayload(token){
+  try{
+    const part=String(token||'').split('.')[1];
+    if(!part)return null;
+    const normalized=part.replace(/-/g,'+').replace(/_/g,'/');
+    const padded=normalized+'='.repeat((4-normalized.length%4)%4);
+    return JSON.parse(decodeURIComponent(Array.from(atob(padded)).map(c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('')));
+  }catch(_error){return null}
+}
+
+let credentialLogoutCheckRunning=false;
+async function enforceCredentialChangeLogout(){
+  if(credentialLogoutCheckRunning)return;
+  credentialLogoutCheckRunning=true;
+  try{
+    const {data:sessionData}=await db.auth.getSession();
+    const session=sessionData?.session;
+    if(!session?.access_token)return;
+    const {data:userData,error}=await db.auth.getUser();
+    if(error||!userData?.user)return;
+    const forcedAt=Date.parse(userData.user.user_metadata?.force_logout_after||'');
+    const payload=decodeJwtPayload(session.access_token);
+    const issuedAt=Number(payload?.iat||0)*1000;
+    if(Number.isFinite(forcedAt)&&forcedAt>0&&issuedAt>0&&issuedAt<forcedAt){
+      await db.auth.signOut({scope:'local'}).catch(()=>{});
+      try{window.localStorage.removeItem('supabase.auth.token')}catch(_error){}
+      const target='/?login=1&credentials=updated';
+      if(location.pathname!=='/'||location.search!==target.slice(1))location.replace(target);
+    }
+  }finally{credentialLogoutCheckRunning=false}
+}
+
+// Verifica subito, quando la pagina torna visibile e periodicamente.
+// In questo modo un dispositivo con una vecchia sessione viene espulso appena torna attivo.
+setTimeout(enforceCredentialChangeLogout,0);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')enforceCredentialChangeLogout()});
+setInterval(enforceCredentialChangeLogout,60000);
+
+
 // Tariffe Consegna24.
 // Gli account creati prima di questa data mantengono la tariffa storica.
 const NEW_TARIFF_CUTOFF='2026-07-12T14:57:29Z';

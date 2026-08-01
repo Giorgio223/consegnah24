@@ -52,6 +52,7 @@ module.exports = async function handler(req, res) {
     const oldEmail = normalizeEmail(req.body?.old_email);
     const newEmail = normalizeEmail(req.body?.new_email);
     const password = String(req.body?.new_password || '');
+    const forceLogout = req.body?.force_logout === true;
 
     if (!validEmail(oldEmail) || !validEmail(newEmail)) {
       return json(res, 400, { error: 'Indirizzo email non valido' });
@@ -59,6 +60,7 @@ module.exports = async function handler(req, res) {
     if (oldEmail === adminEmail) return json(res, 400, { error: 'Non puoi modificare l’account amministratore da questa funzione' });
     if (newEmail === adminEmail) return json(res, 409, { error: 'Il nuovo indirizzo è riservato all’amministratore' });
     if (password && password.length < 8) return json(res, 400, { error: 'La nuova password deve contenere almeno 8 caratteri' });
+    if (forceLogout && !password) return json(res, 400, { error: 'Per disconnettere tutti i dispositivi devi impostare una nuova password' });
 
     const targetUser = await findUserByEmail(supabaseAdmin, oldEmail);
     if (!targetUser) return json(res, 404, { error: 'Cliente non trovato in Supabase Auth' });
@@ -84,6 +86,12 @@ module.exports = async function handler(req, res) {
     const authChanges = { email_confirm: true };
     if (newEmail !== oldEmail) authChanges.email = newEmail;
     if (password) authChanges.password = password;
+    if (forceLogout) {
+      authChanges.user_metadata = {
+        ...(targetUser.user_metadata || {}),
+        force_logout_after: new Date().toISOString()
+      };
+    }
 
     const { data: updatedAuth, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(targetUser.id, authChanges);
     if (updateError) {
@@ -99,6 +107,8 @@ module.exports = async function handler(req, res) {
       old_email: oldEmail,
       new_email: normalizeEmail(updatedAuth?.user?.email || newEmail),
       password_changed: Boolean(password),
+      sessions_revoked: Boolean(forceLogout && password),
+      logout_effective_after: forceLogout ? authChanges.user_metadata.force_logout_after : null,
       orders_updated: changedOrders.length
     });
   } catch (error) {
