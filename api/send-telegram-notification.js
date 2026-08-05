@@ -33,6 +33,7 @@ function buildMessage(order) {
     '🚚 <b>Nuova consegna Consegna24</b>',
     '',
     `<b>ID ordine:</b> ${escapeHtml(order.id)}`,
+    order.customer_reference ? `<b>Numero ordine cliente:</b> ${escapeHtml(order.customer_reference)}` : null,
     `<b>Data:</b> ${escapeHtml(createdAt)}`,
     `<b>Cliente:</b> ${escapeHtml(order.user_email || '-')}`,
     '',
@@ -47,7 +48,7 @@ function buildMessage(order) {
     `<b>Destinatario:</b> ${escapeHtml(order.receiver_name || '-')} · ${escapeHtml(order.receiver_phone || '-')}`,
     '',
     `<b>Cosa manda / note:</b> ${escapeHtml(order.package_description || '-')}`
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 module.exports = async function handler(req, res) {

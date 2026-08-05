@@ -100,3 +100,19 @@ function tariffDescription(legacy=false){
     ? 'Tariffa cliente storico: minimo € 8,99, poi € 0,90/km.'
     : 'Tariffa attuale: € 11,99 fino a 10 km, poi € 1,00 per ogni km aggiuntivo.';
 }
+
+
+async function getEffectiveTariffMode(user){
+  if(!user)return 'piena';
+  try{
+    const {data:sessionData}=await db.auth.getSession();
+    const token=sessionData.session?.access_token;
+    if(token){
+      const response=await fetch('/api/get-my-tariff',{headers:{'Authorization':'Bearer '+token}});
+      const result=await response.json().catch(()=>({}));
+      if(response.ok&&['storico','piena'].includes(result.mode))return result.mode;
+    }
+  }catch(_error){}
+  return isLegacyUser(user)?'storico':'piena';
+}
+function calculateDeliveryPriceByMode(distanceKm,mode){return calculateDeliveryPrice(distanceKm,mode==='storico')}

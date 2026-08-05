@@ -100,6 +100,10 @@ module.exports = async function handler(req, res) {
       }
       throw updateError;
     }
+    if (newEmail !== oldEmail) {
+      const { error: tariffEmailError } = await supabaseAdmin.from('client_tariffs').update({ email: newEmail, updated_at: new Date().toISOString() }).eq('user_id', targetUser.id);
+      if (tariffEmailError) console.warn('Impossibile aggiornare email tariffa:', tariffEmailError.message);
+    }
 
     return json(res, 200, {
       ok: true,

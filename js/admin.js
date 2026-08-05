@@ -19,8 +19,10 @@ let billingResult=null;
   el('billingTo').onchange=calculateBilling;
   el('downloadExcel').onclick=downloadBillingExcel;
   el('printReport').onclick=printBillingReport;
-  el('clientAccountSelect').onchange=()=>{el('openClientEdit').disabled=!el('clientAccountSelect').value};
+  el('clientAccountSelect').onchange=handleClientSelection;
   el('openClientEdit').onclick=openClientEditor;
+  el('loadClientTariff').onclick=loadClientTariff;
+  el('saveClientTariff').onclick=saveClientTariff;
   el('editClientForm').onsubmit=saveClientCredentials;
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove('show'));
   setDefaultBillingPeriod();
@@ -72,6 +74,22 @@ function populateClientAccounts(){
   select.innerHTML='<option value="">Seleziona cliente…</option>'+clients.map(email=>`<option value="${esc(email)}">${esc(email)}</option>`).join('');
   if(clients.includes(current))select.value=current;
   el('openClientEdit').disabled=!select.value;
+}
+
+async function handleClientSelection(){
+  const email=el('clientAccountSelect').value.trim().toLowerCase();
+  el('openClientEdit').disabled=!email;el('clientTariffStatus').textContent='';
+  if(email){el('clientTariffEmail').value=email;await loadClientTariff()}
+}
+async function loadClientTariff(){
+  const email=el('clientTariffEmail').value.trim().toLowerCase(),status=el('clientTariffStatus');
+  if(!email){status.textContent='Inserisci l’email del cliente.';return}
+  status.textContent='Verifica tariffa...';
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/get-client-tariff?email='+encodeURIComponent(email),{headers:{'Authorization':'Bearer '+s.session?.access_token}}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore tariffa');el('clientTariffSelect').value=j.mode;status.textContent=j.mode==='storico'?'Tariffa attuale: storico (€8,99).':'Tariffa attuale: piena (€11,99).'}catch(err){status.textContent=err.message}
+}
+async function saveClientTariff(){
+  const email=el('clientTariffEmail').value.trim().toLowerCase(),mode=el('clientTariffSelect').value,status=el('clientTariffStatus');if(!email){status.textContent='Inserisci l’email del cliente.';return}status.textContent='Salvataggio...';
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/set-client-tariff',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({email,mode})}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore salvataggio');status.textContent='Tariffa salvata correttamente.'}catch(err){status.textContent=err.message}
 }
 
 function openClientEditor(){
@@ -216,12 +234,12 @@ function downloadBillingExcel(){
     ['Quantità','Prezzo unitario (€)','Subtotale (€)'],
     ...r.breakdown.map(x=>[x.count,x.price,x.subtotal])
   ];
-  const detailRows=[['ID ordine','Data ordine','Partenza','Destinazione','Mittente','Telefono mittente','Destinatario','Telefono destinatario','Data / fascia consegna','Prezzo (€)','Pagamento','Stato','Consegnato a','Consegnato il']];
+  const detailRows=[['ID ordine','Riferimento cliente','Data ordine','Partenza','Destinazione','Mittente','Telefono mittente','Destinatario','Telefono destinatario','Data / fascia consegna','Prezzo (€)','Pagamento','Stato','Consegnato a','Consegnato il']];
   r.valid.forEach(o=>detailRows.push([
-    o.id,excelDate(o.created_at),o.pickup_address||'',o.delivery_address||'',o.sender_name||'',o.sender_phone||'',o.receiver_name||'',o.receiver_phone||'',formatDeliverySlot(o.delivery_slot),Number(o.price||0),paymentText(o.payment_status),statusInfo(o.status).text,o.delivered_to||'',excelDate(o.delivered_at)
+    o.id,o.customer_reference||'',excelDate(o.created_at),o.pickup_address||'',o.delivery_address||'',o.sender_name||'',o.sender_phone||'',o.receiver_name||'',o.receiver_phone||'',formatDeliverySlot(o.delivery_slot),Number(o.price||0),paymentText(o.payment_status),statusInfo(o.status).text,o.delivered_to||'',excelDate(o.delivered_at)
   ]));
-  const cancelledRows=[['ID ordine','Data ordine','Partenza','Destinazione','Prezzo (€)','Stato']];
-  r.cancelled.forEach(o=>cancelledRows.push([o.id,excelDate(o.created_at),o.pickup_address||'',o.delivery_address||'',Number(o.price||0),'Annullato']));
+  const cancelledRows=[['ID ordine','Riferimento cliente','Data ordine','Partenza','Destinazione','Prezzo (€)','Stato']];
+  r.cancelled.forEach(o=>cancelledRows.push([o.id,o.customer_reference||'',excelDate(o.created_at),o.pickup_address||'',o.delivery_address||'',Number(o.price||0),'Annullato']));
 
   const wb=XLSX.utils.book_new();
   const wsSummary=XLSX.utils.aoa_to_sheet(summaryRows);
@@ -236,8 +254,8 @@ function downloadBillingExcel(){
     if(wsSummary[`B${row}`])wsSummary[`B${row}`].z='#,##0.00 [$€-it-IT]';
     if(wsSummary[`C${row}`])wsSummary[`C${row}`].z='#,##0.00 [$€-it-IT]';
   });
-  for(let i=2;i<=detailRows.length;i++)if(wsDetail[`J${i}`])wsDetail[`J${i}`].z='#,##0.00 [$€-it-IT]';
-  for(let i=2;i<=cancelledRows.length;i++)if(wsCancelled[`E${i}`])wsCancelled[`E${i}`].z='#,##0.00 [$€-it-IT]';
+  for(let i=2;i<=detailRows.length;i++)if(wsDetail[`K${i}`])wsDetail[`K${i}`].z='#,##0.00 [$€-it-IT]';
+  for(let i=2;i<=cancelledRows.length;i++)if(wsCancelled[`F${i}`])wsCancelled[`F${i}`].z='#,##0.00 [$€-it-IT]';
   XLSX.utils.book_append_sheet(wb,wsSummary,'Riepilogo');
   XLSX.utils.book_append_sheet(wb,wsDetail,'Dettaglio ordini');
   XLSX.utils.book_append_sheet(wb,wsCancelled,'Ordini annullati');
@@ -267,7 +285,7 @@ function render(){
 
   el('orders').innerHTML=rows.length?rows.map(o=>`<article class="orderCard">
     <div class="orderTop">
-      <div><div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta">${esc(fmtDate(o.created_at))} · ${esc(o.user_email||'-')} · ${esc(euro(o.price))}</div></div>
+      <div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta">${esc(fmtDate(o.created_at))} · ${esc(o.user_email||'-')} · ${esc(euro(o.price))}</div></div>
       ${statusBadge(o.status)}
     </div>
     <div class="orderActions">
@@ -292,6 +310,7 @@ function openEditOrder(id){
   if(!order)return;
   editingId=id;
   el('editOrderId').textContent=`Ordine #${order.id}`;
+  el('editCustomerReference').value=order.customer_reference||'';
   el('editPickup').value=order.pickup_address||'';
   el('editDelivery').value=order.delivery_address||'';
   el('editSenderName').value=order.sender_name||'';
@@ -312,7 +331,7 @@ async function saveOrderChanges(e){
   if(!editingId)return;
   const price=Number(String(el('editPrice').value).replace(',','.'));
   if(!Number.isFinite(price)||price<0){el('editOrderStatus').textContent='Inserisci un prezzo valido.';el('editOrderStatus').className='error';return}
-  const payload={pickup_address:el('editPickup').value.trim(),delivery_address:el('editDelivery').value.trim(),sender_name:el('editSenderName').value.trim(),sender_phone:el('editSenderPhone').value.trim(),receiver_name:el('editReceiverName').value.trim(),receiver_phone:el('editReceiverPhone').value.trim(),delivery_slot:el('editSlot').value.trim(),price:Number(price.toFixed(2)),payment_status:el('editPayment').value,package_description:el('editPackage').value.trim()};
+  const payload={customer_reference:el('editCustomerReference').value.trim()||null,pickup_address:el('editPickup').value.trim(),delivery_address:el('editDelivery').value.trim(),sender_name:el('editSenderName').value.trim(),sender_phone:el('editSenderPhone').value.trim(),receiver_name:el('editReceiverName').value.trim(),receiver_phone:el('editReceiverPhone').value.trim(),delivery_slot:el('editSlot').value.trim(),price:Number(price.toFixed(2)),payment_status:el('editPayment').value,package_description:el('editPackage').value.trim()};
   if(!payload.pickup_address||!payload.delivery_address){el('editOrderStatus').textContent='Gli indirizzi di partenza e destinazione sono obbligatori.';el('editOrderStatus').className='error';return}
   const saveBtn=el('saveOrderBtn');saveBtn.disabled=true;el('editOrderStatus').textContent='Salvataggio...';el('editOrderStatus').className='muted';
   const{error}=await db.from('orders').update(payload).eq('id',editingId);saveBtn.disabled=false;
@@ -321,21 +340,12 @@ async function saveOrderChanges(e){
 }
 
 async function changeStatus(sel){
-  const id=sel.dataset.status;
-  const old=orders.find(o=>String(o.id)===String(id))?.status;
+  const id=sel.dataset.status,old=orders.find(o=>String(o.id)===String(id))?.status;
   if(sel.value==='consegnato!'){pendingId=id;el('deliveredToInput').value='';el('deliveredModal').classList.add('show');return}
-  const update={status:sel.value};
-  if(sel.value!=='consegnato!'){update.delivered_to=null;update.delivered_at=null}
-  const{error}=await db.from('orders').update(update).eq('id',id);
-  if(error){alert(error.message);sel.value=old;return}
-  await load();
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/update-order-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({order_id:id,status:sel.value})}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore cambio stato');await load()}catch(err){alert(err.message);sel.value=old}
 }
 
 async function saveDelivered(e){
-  e.preventDefault();
-  const note=el('deliveredToInput').value.trim();
-  if(!note)return;
-  const{error}=await db.from('orders').update({status:'consegnato!',delivered_to:note,delivered_at:new Date().toISOString()}).eq('id',pendingId);
-  if(error){el('deliveredStatus').textContent=error.message;return}
-  el('deliveredModal').classList.remove('show');pendingId=null;await load();
+  e.preventDefault();const note=el('deliveredToInput').value.trim();if(!note)return;
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/update-order-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({order_id:pendingId,status:'consegnato!',delivered_to:note})}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore consegna');el('deliveredModal').classList.remove('show');pendingId=null;await load()}catch(err){el('deliveredStatus').textContent=err.message}
 }
