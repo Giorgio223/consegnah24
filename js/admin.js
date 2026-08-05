@@ -1,3 +1,4 @@
+async function parseApiJson(response){const text=await response.text();try{return text?JSON.parse(text):{}}catch{return{error:text||`Errore server (${response.status})`}}}
 let orders=[];
 let pendingId=null;
 let editingId=null;
@@ -85,11 +86,11 @@ async function loadClientTariff(){
   const email=el('clientTariffEmail').value.trim().toLowerCase(),status=el('clientTariffStatus');
   if(!email){status.textContent='Inserisci l’email del cliente.';return}
   status.textContent='Verifica tariffa...';
-  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/get-client-tariff?email='+encodeURIComponent(email),{headers:{'Authorization':'Bearer '+s.session?.access_token}}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore tariffa');el('clientTariffSelect').value=j.mode;status.textContent=j.mode==='storico'?'Tariffa attuale: storico (€8,99).':'Tariffa attuale: piena (€11,99).'}catch(err){status.textContent=err.message}
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/get-client-tariff?email='+encodeURIComponent(email),{headers:{'Authorization':'Bearer '+s.session?.access_token}}),j=await parseApiJson(r);if(!r.ok)throw Error(j.error||'Errore tariffa');el('clientTariffSelect').value=j.mode;status.textContent=j.mode==='storico'?'Tariffa attuale: storico (€8,99).':'Tariffa attuale: piena (€11,99).'}catch(err){status.textContent=err.message}
 }
 async function saveClientTariff(){
   const email=el('clientTariffEmail').value.trim().toLowerCase(),mode=el('clientTariffSelect').value,status=el('clientTariffStatus');if(!email){status.textContent='Inserisci l’email del cliente.';return}status.textContent='Salvataggio...';
-  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/set-client-tariff',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({email,mode})}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore salvataggio');status.textContent='Tariffa salvata correttamente.'}catch(err){status.textContent=err.message}
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/set-client-tariff',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({email,mode})}),j=await parseApiJson(r);if(!r.ok)throw Error(j.error||'Errore salvataggio');status.textContent='Tariffa salvata correttamente.'}catch(err){status.textContent=err.message}
 }
 
 function openClientEditor(){
@@ -342,10 +343,10 @@ async function saveOrderChanges(e){
 async function changeStatus(sel){
   const id=sel.dataset.status,old=orders.find(o=>String(o.id)===String(id))?.status;
   if(sel.value==='consegnato!'){pendingId=id;el('deliveredToInput').value='';el('deliveredModal').classList.add('show');return}
-  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/update-order-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({order_id:id,status:sel.value})}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore cambio stato');await load()}catch(err){alert(err.message);sel.value=old}
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/update-order-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({order_id:id,status:sel.value})}),j=await parseApiJson(r);if(!r.ok)throw Error(j.error||'Errore cambio stato');await load()}catch(err){alert(err.message);sel.value=old}
 }
 
 async function saveDelivered(e){
   e.preventDefault();const note=el('deliveredToInput').value.trim();if(!note)return;
-  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/update-order-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({order_id:pendingId,status:'consegnato!',delivered_to:note})}),j=await r.json();if(!r.ok)throw Error(j.error||'Errore consegna');el('deliveredModal').classList.remove('show');pendingId=null;await load()}catch(err){el('deliveredStatus').textContent=err.message}
+  try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/update-order-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({order_id:pendingId,status:'consegnato!',delivered_to:note})}),j=await parseApiJson(r);if(!r.ok)throw Error(j.error||'Errore consegna');el('deliveredModal').classList.remove('show');pendingId=null;await load()}catch(err){el('deliveredStatus').textContent=err.message}
 }

@@ -1,0 +1,20 @@
+CONSEGNA24 - FIX API VERCEL
+
+Questa versione corregge gli errori:
+- Cannot find module '@supabase/supabase-js' nelle nuove API tracking/tariffe/status;
+- Unexpected token 'A' ... is not valid JSON;
+- The string did not match the expected pattern durante il cambio stato.
+
+Le API tracking, tariffe e cambio stato ora comunicano con Supabase tramite fetch server-side e restituiscono sempre JSON.
+
+PRIMA DEL DEPLOY
+1. Verificare di avere già eseguito in Supabase SQL Editor:
+   sql/001_add_delivery_confirmation_fields.sql
+   sql/002_tracking_reference_tariffs.sql
+2. In Vercel devono essere presenti:
+   SUPABASE_URL
+   SUPABASE_SERVICE_ROLE_KEY
+   ADMIN_EMAIL (opzionale; default angiorgio6@gmail.com)
+3. Caricare il contenuto di questo archivio nel repository senza ripristinare vecchi duplicati api/api.
+4. In /api devono esserci 12 file .js. Non aggiungere api/_helpers.js o api/api/.
+5. Dopo il commit, eseguire un nuovo deploy senza cache se necessario.

@@ -1,1 +1,29 @@
-const{ADMIN_EMAIL,adminClient,authUser,findUserByEmail,norm}=require('../lib/api-helpers');module.exports=async(req,res)=>{if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});try{const db=adminClient(),a=await authUser(db,req);if(norm(a?.email)!==ADMIN_EMAIL)return res.status(403).json({error:'Solo amministratore'});const email=norm(req.body?.email),mode=req.body?.mode;if(!['storico','piena'].includes(mode))return res.status(400).json({error:'Tariffa non valida'});const u=await findUserByEmail(db,email);if(!u)return res.status(404).json({error:'Cliente non trovato'});const{error}=await db.from('client_tariffs').upsert({user_id:u.id,email:u.email,tariff_mode:mode,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error)throw error;res.json({ok:true,mode})}catch(e){res.status(500).json({error:e.message})}};
+const { ADMIN_EMAIL, authUser, findUserByEmail, norm, rest, sendError } = require('../lib/api-helpers');
+
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  try {
+    const admin = await authUser(req);
+    if (norm(admin?.email) !== ADMIN_EMAIL) return res.status(403).json({ error: 'Solo amministratore' });
+    const email = norm(req.body?.email);
+    const mode = String(req.body?.mode || '');
+    if (!email) return res.status(400).json({ error: 'Email cliente mancante' });
+    if (!['storico', 'piena'].includes(mode)) return res.status(400).json({ error: 'Tariffa non valida' });
+    const user = await findUserByEmail(email);
+    if (!user) return res.status(404).json({ error: 'Cliente non trovato' });
+    await rest('client_tariffs', {
+      method: 'POST',
+      query: { on_conflict: 'user_id' },
+      prefer: 'resolution=merge-duplicates,return=minimal',
+      body: {
+        user_id: user.id,
+        email: user.email,
+        tariff_mode: mode,
+        updated_at: new Date().toISOString(),
+      },
+    });
+    return res.status(200).json({ ok: true, mode });
+  } catch (error) {
+    return sendError(res, error);
+  }
+};
