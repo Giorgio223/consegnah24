@@ -113,3 +113,6 @@ Novità:
 - riferimento ordine cliente;
 - link pubblico sicuro di tracking con cronologia e orari degli stati;
 - scelta tariffa `storico` / `piena` dalla Gestione clienti.
+
+## Fatturato azienda: città di destinazione
+Il riepilogo economico raggruppa gli ordini per prezzo e città di destinazione. La città è inclusa anche nei fogli Excel (riepilogo, dettaglio e annullati) e nel report stampabile/PDF.
