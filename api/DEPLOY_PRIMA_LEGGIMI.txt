@@ -1,0 +1,19 @@
+CONSEGNA24 - PASSAGGIO OBBLIGATORIO PRIMA DEL DEPLOY
+
+1) Apri Supabase > SQL Editor.
+2) Apri il file sql/002_tracking_reference_tariffs.sql.
+3) Copia tutto il contenuto, eseguilo una sola volta e verifica che non compaiano errori.
+4) Poi carica questo progetto su GitHub e fai il redeploy su Vercel.
+
+Le variabili Vercel già usate dal progetto devono rimanere presenti:
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+- ADMIN_EMAIL (facoltativa: se assente usa angiorgio6@gmail.com)
+- tutte le variabili Stripe e Telegram già configurate.
+
+Funzioni aggiunte:
+- tariffa storico/piena per singolo cliente dalla Gestione clienti;
+- ultimo indirizzo di partenza verificato con Google Maps;
+- riferimento/numero ordine del cliente;
+- link pubblico sicuro di tracking;
+- cronologia con data e ora di ogni cambio stato.

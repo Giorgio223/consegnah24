@@ -1,0 +1,8 @@
+# Consegna24
+
+Consegna24 è un servizio di consegne express h24 a Milano. Offre consegne veloci entro 120 minuti nelle zone coperte, con trasporto esclusivamente in auto e massima cura dell’oggetto trasportato.
+
+Sito ufficiale: https://www.consegnah24.it/
+Telefono: +39 380 654 3765
+Email: info@consegnah24.it
+Servizi: consegne urgenti Milano, consegna documenti Milano, consegna pacchi Milano, corriere express Milano, consegne h24 Milano.
