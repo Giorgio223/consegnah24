@@ -25,6 +25,8 @@ let billingResult=null;
   el('loadClientTariff').onclick=loadClientTariff;
   el('saveClientTariff').onclick=saveClientTariff;
   el('editClientForm').onsubmit=saveClientCredentials;
+  el('openTodoDeliveries').onclick=openTodoDeliveries;
+  el('todoDeliveryDate').onchange=renderTodoDeliveries;
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>el(b.dataset.close).classList.remove('show'));
   setDefaultBillingPeriod();
   await load();
@@ -43,6 +45,47 @@ function setDefaultBillingPeriod(){
   el('billingTo').value=localISODate(new Date(now.getFullYear(),now.getMonth()+1,0));
 }
 
+// Data operativa: giorno previsto di consegna ricavato da delivery_slot (YYYY-MM-DD | ...).
+// Gli ordini storici privi di una fascia valida usano created_at solo come fallback.
+function orderDeliveryDateISO(order){
+  const match=String(order?.delivery_slot||'').match(/^(\d{4}-\d{2}-\d{2})/);
+  if(match)return match[1];
+  if(order?.created_at){
+    const d=new Date(order.created_at);
+    if(!Number.isNaN(d.getTime()))return localISODate(d);
+  }
+  return '';
+}
+function orderDeliveryDate(order){
+  const iso=orderDeliveryDateISO(order);
+  if(!iso)return null;
+  const d=new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime())?null:d;
+}
+function orderDeliveryTime(order){
+  const parts=String(order?.delivery_slot||'').split('|');
+  return parts.length>1?parts.slice(1).join('|').trim():'';
+}
+function formatPlannedDate(order){
+  const d=orderDeliveryDate(order);
+  return d?d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+}
+function isActiveOrder(order){
+  return !['consegnato!','annullato'].includes(normalizeStatus(order.status));
+}
+function openTodoDeliveries(){
+  if(!el('todoDeliveryDate').value)el('todoDeliveryDate').value=localISODate(new Date());
+  renderTodoDeliveries();
+  el('todoDeliveriesModal').classList.add('show');
+}
+function renderTodoDeliveries(){
+  const day=el('todoDeliveryDate').value;
+  const rows=orders.filter(o=>isActiveOrder(o)&&orderDeliveryDateISO(o)===day).sort((a,b)=>orderDeliveryTime(a).localeCompare(orderDeliveryTime(b)));
+  el('todoDeliveryCount').textContent=rows.length;
+  el('todoDeliveryOrders').innerHTML=rows.length?rows.map(o=>`<article class="orderCard"><div class="orderTop"><div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta"><span class="plannedDate">${esc(formatPlannedDate(o))}</span>${orderDeliveryTime(o)?` · <span class="plannedTime">${esc(orderDeliveryTime(o))}</span>`:''} · ${esc(o.user_email||'-')} · ${esc(euro(o.price))}</div></div>${statusBadge(o.status)}</div><div class="orderActions"><a class="btn ghost" href="/ordine.html?id=${encodeURIComponent(o.id)}">Dettagli</a><button class="btn yellow" type="button" data-todo-edit="${esc(o.id)}">Modifica</button></div></article>`).join(''):'<div class="card empty">Nessuna consegna attiva prevista per questo giorno.</div>';
+  document.querySelectorAll('[data-todo-edit]').forEach(b=>b.onclick=()=>openEditOrder(b.dataset.todoEdit));
+}
+
 async function load(){
   el('orders').innerHTML='<div class="card empty">Caricamento...</div>';
   const{data,error}=await db.from('orders').select('*').order('created_at',{ascending:false});
@@ -57,6 +100,7 @@ async function load(){
   populateClientAccounts();
   calculateBilling();
   render();
+  if(el('todoDeliveriesModal')?.classList.contains('show'))renderTodoDeliveries();
 }
 
 function populateBillingClients(){
@@ -180,8 +224,8 @@ function calculateBilling(){
 
   const selected=orders.filter(o=>{
     if((o.user_email||'').trim().toLowerCase()!==client)return false;
-    const created=new Date(o.created_at);
-    return !Number.isNaN(created.getTime())&&created>=bounds.from&&created<=bounds.to;
+    const planned=orderDeliveryDate(o);
+    return planned&&planned>=bounds.from&&planned<=bounds.to;
   });
   const valid=selected.filter(o=>normalizeStatus(o.status)!=='annullato');
   const cancelled=selected.filter(o=>normalizeStatus(o.status)==='annullato');
@@ -252,12 +296,12 @@ function downloadBillingExcel(){
     ['Quantità','Città destinazione','Prezzo unitario (€)','Subtotale (€)'],
     ...r.breakdown.map(x=>[x.count,x.city,x.price,x.subtotal])
   ];
-  const detailRows=[['ID ordine','Riferimento cliente','Data ordine','Partenza','Destinazione','Città destinazione','Mittente','Telefono mittente','Destinatario','Telefono destinatario','Data / fascia consegna','Prezzo (€)','Pagamento','Stato','Consegnato a','Consegnato il']];
+  const detailRows=[['ID ordine','Riferimento cliente','Data consegna','Partenza','Destinazione','Città destinazione','Mittente','Telefono mittente','Destinatario','Telefono destinatario','Data / fascia consegna','Prezzo (€)','Pagamento','Stato','Consegnato a','Consegnato il']];
   r.valid.forEach(o=>detailRows.push([
-    o.id,o.customer_reference||'',excelDate(o.created_at),o.pickup_address||'',o.delivery_address||'',destinationCity(o.delivery_address),o.sender_name||'',o.sender_phone||'',o.receiver_name||'',o.receiver_phone||'',formatDeliverySlot(o.delivery_slot),Number(o.price||0),paymentText(o.payment_status),statusInfo(o.status).text,o.delivered_to||'',excelDate(o.delivered_at)
+    o.id,o.customer_reference||'',formatPlannedDate(o),o.pickup_address||'',o.delivery_address||'',destinationCity(o.delivery_address),o.sender_name||'',o.sender_phone||'',o.receiver_name||'',o.receiver_phone||'',formatDeliverySlot(o.delivery_slot),Number(o.price||0),paymentText(o.payment_status),statusInfo(o.status).text,o.delivered_to||'',excelDate(o.delivered_at)
   ]));
-  const cancelledRows=[['ID ordine','Riferimento cliente','Data ordine','Partenza','Destinazione','Città destinazione','Prezzo (€)','Stato']];
-  r.cancelled.forEach(o=>cancelledRows.push([o.id,o.customer_reference||'',excelDate(o.created_at),o.pickup_address||'',o.delivery_address||'',destinationCity(o.delivery_address),Number(o.price||0),'Annullato']));
+  const cancelledRows=[['ID ordine','Riferimento cliente','Data consegna','Partenza','Destinazione','Città destinazione','Prezzo (€)','Stato']];
+  r.cancelled.forEach(o=>cancelledRows.push([o.id,o.customer_reference||'',formatPlannedDate(o),o.pickup_address||'',o.delivery_address||'',destinationCity(o.delivery_address),Number(o.price||0),'Annullato']));
 
   const wb=XLSX.utils.book_new();
   const wsSummary=XLSX.utils.aoa_to_sheet(summaryRows);
@@ -286,7 +330,7 @@ function printBillingReport(){
   const r=billingResult;
   const period=`${new Date(r.bounds.from).toLocaleDateString('it-IT')} – ${new Date(r.bounds.to).toLocaleDateString('it-IT')}`;
   const breakdown=r.breakdown.length?r.breakdown.map(x=>`<tr><td>${x.count}</td><td>${esc(x.city)}</td><td>${euro(x.price)}</td><td>${euro(x.subtotal)}</td></tr>`).join(''):'<tr><td colspan="4">Nessun ordine contabilizzabile</td></tr>';
-  const details=r.valid.map(o=>`<tr><td>#${esc(o.id)}</td><td>${esc(new Date(o.created_at).toLocaleDateString('it-IT'))}</td><td>${esc(destinationCity(o.delivery_address))}</td><td>${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</td><td>${esc(euro(o.price))}</td></tr>`).join('');
+  const details=r.valid.map(o=>`<tr><td>#${esc(o.id)}</td><td>${esc(formatPlannedDate(o))}</td><td>${esc(destinationCity(o.delivery_address))}</td><td>${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</td><td>${esc(euro(o.price))}</td></tr>`).join('');
   const popup=window.open('','_blank','noopener,noreferrer,width=1000,height=800');
   if(!popup){alert('Il browser ha bloccato la finestra di stampa. Consenti i popup e riprova.');return}
   popup.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Riepilogo ${esc(r.client)}</title><style>body{font-family:Arial,sans-serif;color:#111827;margin:36px}h1{margin:0;font-size:28px}.brand{font-weight:900;color:#f0b400}.meta{margin:18px 0 28px;line-height:1.7}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}.kpi{border:1px solid #ddd;border-radius:12px;padding:15px}.kpi span{font-size:12px;color:#666}.kpi strong{display:block;font-size:24px;margin-top:6px}table{width:100%;border-collapse:collapse;margin:14px 0 28px}th,td{border-bottom:1px solid #ddd;padding:10px;text-align:left;font-size:13px}th{background:#f7f8fb}.note{font-size:11px;color:#666;margin-top:30px}@media print{button{display:none}body{margin:15mm}}</style></head><body><div class="brand">Consegna24</div><h1>Riepilogo economico cliente</h1><div class="meta"><b>Cliente:</b> ${esc(r.client)}<br><b>Periodo:</b> ${esc(period)}<br><b>Generato il:</b> ${esc(new Date().toLocaleString('it-IT'))}</div><div class="kpis"><div class="kpi"><span>Ordini contabilizzati</span><strong>${r.valid.length}</strong></div><div class="kpi"><span>Totale dovuto</span><strong>${esc(euro(r.total))}</strong></div><div class="kpi"><span>Annullati esclusi</span><strong>${r.cancelled.length}</strong></div></div><h2>Riepilogo per prezzo e città</h2><table><thead><tr><th>Quantità</th><th>Città destinazione</th><th>Prezzo unitario</th><th>Subtotale</th></tr></thead><tbody>${breakdown}</tbody></table><h2>Dettaglio ordini</h2><table><thead><tr><th>ID</th><th>Data</th><th>Città destinazione</th><th>Tratta</th><th>Prezzo</th></tr></thead><tbody>${details||'<tr><td colspan="5">Nessun ordine</td></tr>'}</tbody></table><p class="note">Documento gestionale di riepilogo. Non sostituisce la fattura fiscale.</p><script>window.onload=()=>window.print()<\/script></body></html>`);
@@ -303,7 +347,7 @@ function render(){
 
   el('orders').innerHTML=rows.length?rows.map(o=>`<article class="orderCard">
     <div class="orderTop">
-      <div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta">${esc(fmtDate(o.created_at))} · ${esc(o.user_email||'-')} · ${esc(euro(o.price))}</div></div>
+      <div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta"><span class="plannedDate">Consegna ${esc(formatPlannedDate(o))}</span>${orderDeliveryTime(o)?` · <span class="plannedTime">${esc(orderDeliveryTime(o))}</span>`:''} · ${esc(o.user_email||'-')} · ${esc(euro(o.price))}</div></div>
       ${statusBadge(o.status)}
     </div>
     <div class="orderActions">

@@ -25,6 +25,15 @@
       <div class="stat featuredStat"><span>Valore ordini validi</span><strong id="revenue">—</strong></div>
     </div>
 
+    <section class="todoPanel">
+      <div>
+        <span class="billingEyebrow">Pianificazione</span>
+        <h2>Le consegne da fare</h2>
+        <p class="muted">Apri l'agenda e scegli un giorno per vedere tutte le consegne attive previste per quella data.</p>
+      </div>
+      <button class="btn yellow" type="button" id="openTodoDeliveries">Apri agenda consegne</button>
+    </section>
+
     <section class="billingPanel" id="fatturato">
       <div class="billingHead">
         <div>
@@ -76,6 +85,8 @@
   </div>
 </main>
 
+
+<div class="modalLayer" id="todoDeliveriesModal"><div class="modal todoModal"><div class="modalHead"><div><h2>Le consegne da fare</h2><p class="muted">Gli ordini sono raggruppati per data prevista di consegna, non per data di inserimento.</p></div><button class="x" type="button" data-close="todoDeliveriesModal">×</button></div><div class="modalBody"><div class="todoDateBar"><div class="field"><label for="todoDeliveryDate">Giorno</label><input id="todoDeliveryDate" type="date"></div><div class="todoCount"><span>Consegne attive</span><strong id="todoDeliveryCount">0</strong></div></div><div id="todoDeliveryOrders" class="ordersGrid"></div></div></div></div>
 
 <div class="modalLayer" id="editClientModal"><div class="modal small"><div class="modalHead"><div><h2>Modifica cliente</h2><p class="muted">L'account e tutto lo storico resteranno gli stessi.</p></div><button class="x" type="button" data-close="editClientModal">×</button></div><form class="modalBody" id="editClientForm">
   <div class="notice" id="currentClientNotice"></div>

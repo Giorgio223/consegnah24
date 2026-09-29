@@ -37,6 +37,29 @@
     return date.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
   }
 
+  // La data gestionale dell'ordine è il giorno in cui la consegna deve essere eseguita.
+  // Per gli ordini storici senza una fascia valida manteniamo created_at come fallback.
+  function deliveryDateISO(order){
+    const match=String(order?.delivery_slot||'').match(/^(\d{4}-\d{2}-\d{2})/);
+    if(match)return match[1];
+    if(order?.created_at){
+      const d=new Date(order.created_at);
+      if(!Number.isNaN(d.getTime()))return dateInputValue(d);
+    }
+    return '';
+  }
+
+  function deliveryDate(order){
+    const iso=deliveryDateISO(order);
+    return iso?parseLocalDate(iso):null;
+  }
+
+  function deliverySlotTime(order){
+    const raw=String(order?.delivery_slot||'');
+    const parts=raw.split('|');
+    return parts.length>1?parts.slice(1).join('|').trim():'';
+  }
+
   function render(){
     const from=parseLocalDate(dateFrom.value);
     const to=parseLocalDate(dateTo.value,true);
@@ -53,9 +76,11 @@
     }
 
     const filtered=allOrders.filter(o=>{
-      if(!o.created_at)return false;
-      const created=new Date(o.created_at);
-      return created>=from&&created<=to;
+      const planned=deliveryDate(o);
+      return planned&&planned>=from&&planned<=to;
+    }).sort((a,b)=>{
+      const da=deliveryDate(a)?.getTime()||0,db=deliveryDate(b)?.getTime()||0;
+      return db-da;
     });
 
     const valid=filtered.filter(o=>normalizeStatus(o.status)!=='annullato');
@@ -77,7 +102,7 @@
           const deliveredTime=status.level===3&&o.delivered_at
             ? `<span class="deliveredTime">alle ${esc(new Date(o.delivered_at).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}))}</span>`
             : '';
-          return `<article class="orderCard"><div class="orderTop"><div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta">${esc(fmtDate(o.created_at))} · ${esc(euro(o.price))} · ${esc(paymentText(o.payment_status))}</div></div><div class="statusStack">${statusBadge(o.status)}${deliveredTime}</div></div><div class="orderActions"><a class="btn primary" href="/ordine.html?id=${encodeURIComponent(o.id)}">Apri dettagli</a></div></article>`;
+          return `<article class="orderCard"><div class="orderTop"><div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta"><strong>Consegna: ${esc(formatOnlyDate(deliveryDate(o)))}</strong>${deliverySlotTime(o)?` · ${esc(deliverySlotTime(o))}`:''} · ${esc(euro(o.price))} · ${esc(paymentText(o.payment_status))}</div></div><div class="statusStack">${statusBadge(o.status)}${deliveredTime}</div></div><div class="orderActions"><a class="btn primary" href="/ordine.html?id=${encodeURIComponent(o.id)}">Apri dettagli</a></div></article>`;
         }).join('')
       : '<div class="card empty">Nessuna consegna nel periodo selezionato.</div>';
   }
