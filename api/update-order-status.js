@@ -1,14 +1,60 @@
-const { ADMIN_EMAIL, authUser, norm, rest, sendError } = require('../lib/api-helpers');
+const { ADMIN_EMAIL, authUser, getSingle, norm, rest, sendError } = require('../lib/api-helpers');
 
 function isDelivered(status) {
   return norm(status).includes('consegnato');
+}
+function isCancelled(status) {
+  return norm(status).includes('annullato');
+}
+function validTime(value) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value || ''));
 }
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try {
-    const admin = await authUser(req);
-    if (norm(admin?.email) !== ADMIN_EMAIL) return res.status(403).json({ error: 'Solo amministratore' });
+    const user = await authUser(req);
+    if (!user?.email) return res.status(401).json({ error: 'Sessione non valida' });
+
+    // Modifica autonoma del cliente: solo i campi consentiti e solo sui propri ordini attivi.
+    if (req.body?.action === 'client_edit') {
+      const orderId = req.body?.order_id;
+      if (!orderId) return res.status(400).json({ error: 'Ordine mancante' });
+      const order = await getSingle('orders', { id: `eq.${orderId}` }, { maybe: true });
+      if (!order) return res.status(404).json({ error: 'Ordine non trovato' });
+      if (norm(order.user_email) !== norm(user.email)) return res.status(403).json({ error: 'Ordine non autorizzato' });
+      if (isDelivered(order.status) || isCancelled(order.status)) {
+        return res.status(409).json({ error: 'Una consegna conclusa o annullata non può essere modificata.' });
+      }
+
+      const senderName = String(req.body?.sender_name || '').trim();
+      const receiverName = String(req.body?.receiver_name || '').trim();
+      const notes = String(req.body?.package_description || '').trim();
+      const timeFrom = String(req.body?.time_from || '').trim();
+      const timeTo = String(req.body?.time_to || '').trim();
+      const dateMatch = String(order.delivery_slot || '').match(/^(\d{4}-\d{2}-\d{2})/);
+      if (!senderName || !receiverName || !validTime(timeFrom) || !validTime(timeTo) || !dateMatch) {
+        return res.status(400).json({ error: 'Dati della consegna non validi.' });
+      }
+      if (timeTo <= timeFrom) return res.status(400).json({ error: "L'orario finale deve essere successivo a quello iniziale." });
+
+      const update = {
+        sender_name: senderName,
+        receiver_name: receiverName,
+        package_description: notes,
+        delivery_slot: `${dateMatch[1]} | ${timeFrom} - ${timeTo}`,
+      };
+      await rest('orders', {
+        method: 'PATCH',
+        query: { id: `eq.${orderId}` },
+        prefer: 'return=minimal',
+        body: update,
+      });
+      return res.status(200).json({ ok: true, ...update });
+    }
+
+    // Cambio stato: resta riservato all'amministratore.
+    if (norm(user.email) !== ADMIN_EMAIL) return res.status(403).json({ error: 'Solo amministratore' });
     const orderId = req.body?.order_id;
     const status = String(req.body?.status || '').trim();
     if (!orderId || !status) return res.status(400).json({ error: 'Dati mancanti' });

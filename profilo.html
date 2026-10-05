@@ -76,6 +76,48 @@
   </div>
 </main>
 
+<div class="modalLayer" id="clientEditModal" aria-hidden="true">
+  <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="clientEditTitle">
+    <div class="modalHead">
+      <div>
+        <h2 id="clientEditTitle" style="margin:0">Modifica consegna</h2>
+        <p class="muted" style="margin:6px 0 0">Puoi aggiornare nomi, note e orario della consegna.</p>
+      </div>
+      <button class="x" type="button" id="closeClientEditModal" aria-label="Chiudi">×</button>
+    </div>
+    <form class="modalBody" id="clientEditForm">
+      <div class="grid2">
+        <div class="field">
+          <label for="clientEditSenderName">Nome e cognome mittente</label>
+          <input id="clientEditSenderName" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="clientEditReceiverName">Nome e cognome destinatario</label>
+          <input id="clientEditReceiverName" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="clientEditTimeFrom">Dalle</label>
+          <input id="clientEditTimeFrom" type="time" required>
+        </div>
+        <div class="field">
+          <label for="clientEditTimeTo">Alle</label>
+          <input id="clientEditTimeTo" type="time" required>
+        </div>
+        <div class="field full">
+          <label for="clientEditNotes">Note</label>
+          <textarea id="clientEditNotes" placeholder="Note sulla consegna"></textarea>
+        </div>
+      </div>
+      <p class="muted" id="clientEditDateLabel"></p>
+      <p id="clientEditStatus"></p>
+      <div class="orderActions">
+        <button class="btn yellow" type="submit" id="saveClientEditBtn">Salva modifiche</button>
+        <button class="btn ghost" type="button" id="cancelClientEditBtn">Annulla</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/config.js"></script>
 <script src="/js/profile.js"></script>

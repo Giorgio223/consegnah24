@@ -11,6 +11,54 @@
   const applyBtn=el('applyFilterBtn');
   const currentMonthBtn=el('currentMonthBtn');
   let allOrders=[];
+  let editingOrder=null;
+
+  const editModal=el('clientEditModal');
+  const editForm=el('clientEditForm');
+  const editSenderName=el('clientEditSenderName');
+  const editReceiverName=el('clientEditReceiverName');
+  const editTimeFrom=el('clientEditTimeFrom');
+  const editTimeTo=el('clientEditTimeTo');
+  const editNotes=el('clientEditNotes');
+  const editDateLabel=el('clientEditDateLabel');
+  const editStatus=el('clientEditStatus');
+
+  function editableOrder(order){
+    const status=normalizeStatus(order?.status);
+    return status!=='consegnato'&&status!=='annullato';
+  }
+
+  function parseDeliveryTimes(order){
+    const time=deliverySlotTime(order);
+    const match=time.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+    return match?[match[1],match[2]]:['',''];
+  }
+
+  function closeEditModal(){
+    editModal.classList.remove('show');
+    editModal.setAttribute('aria-hidden','true');
+    editingOrder=null;
+    editStatus.textContent='';
+    editStatus.className='';
+  }
+
+  function openEditModal(orderId){
+    const order=allOrders.find(o=>String(o.id)===String(orderId));
+    if(!order||!editableOrder(order))return;
+    editingOrder=order;
+    const [from,to]=parseDeliveryTimes(order);
+    editSenderName.value=order.sender_name||'';
+    editReceiverName.value=order.receiver_name||'';
+    editTimeFrom.value=from;
+    editTimeTo.value=to;
+    editNotes.value=order.package_description||'';
+    const planned=deliveryDate(order);
+    editDateLabel.textContent=planned?`Data della consegna: ${formatOnlyDate(planned)} (la data non viene modificata)`:'Data della consegna invariata.';
+    editStatus.textContent='';
+    editStatus.className='';
+    editModal.classList.add('show');
+    editModal.setAttribute('aria-hidden','false');
+  }
 
   function dateInputValue(date){
     const y=date.getFullYear();
@@ -102,10 +150,90 @@
           const deliveredTime=status.level===3&&o.delivered_at
             ? `<span class="deliveredTime">alle ${esc(new Date(o.delivered_at).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}))}</span>`
             : '';
-          return `<article class="orderCard"><div class="orderTop"><div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta"><strong>Consegna: ${esc(formatOnlyDate(deliveryDate(o)))}</strong>${deliverySlotTime(o)?` · ${esc(deliverySlotTime(o))}`:''} · ${esc(euro(o.price))} · ${esc(paymentText(o.payment_status))}</div></div><div class="statusStack">${statusBadge(o.status)}${deliveredTime}</div></div><div class="orderActions"><a class="btn primary" href="/ordine.html?id=${encodeURIComponent(o.id)}">Apri dettagli</a></div></article>`;
+          return `<article class="orderCard"><div class="orderTop"><div>${o.customer_reference?`<div class="customerRef">Numero ordine: ${esc(o.customer_reference)}</div>`:''}<div class="route">${esc(o.pickup_address||'-')} → ${esc(o.delivery_address||'-')}</div><div class="orderMeta"><strong>Consegna: ${esc(formatOnlyDate(deliveryDate(o)))}</strong>${deliverySlotTime(o)?` · ${esc(deliverySlotTime(o))}`:''} · ${esc(euro(o.price))} · ${esc(paymentText(o.payment_status))}</div></div><div class="statusStack">${statusBadge(o.status)}${deliveredTime}</div></div><div class="orderActions"><a class="btn primary" href="/ordine.html?id=${encodeURIComponent(o.id)}">Apri dettagli</a>${editableOrder(o)?`<button class="btn ghost clientEditBtn" type="button" data-order-id="${esc(o.id)}">Modifica</button>`:''}</div></article>`;
         }).join('')
       : '<div class="card empty">Nessuna consegna nel periodo selezionato.</div>';
+
+    el('orders').querySelectorAll('.clientEditBtn').forEach(btn=>{
+      btn.onclick=()=>openEditModal(btn.dataset.orderId);
+    });
   }
+
+  el('closeClientEditModal').onclick=closeEditModal;
+  el('cancelClientEditBtn').onclick=closeEditModal;
+  editModal.addEventListener('click',e=>{if(e.target===editModal)closeEditModal()});
+
+  editForm.addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!editingOrder)return;
+    if(!editableOrder(editingOrder)){
+      editStatus.textContent='Questa consegna non può più essere modificata.';
+      editStatus.className='error';
+      return;
+    }
+    const sender=editSenderName.value.trim();
+    const receiver=editReceiverName.value.trim();
+    const from=editTimeFrom.value;
+    const to=editTimeTo.value;
+    if(!sender||!receiver||!from||!to){
+      editStatus.textContent='Compila tutti i campi obbligatori.';
+      editStatus.className='error';
+      return;
+    }
+    if(to<=from){
+      editStatus.textContent="L'orario finale deve essere successivo a quello iniziale.";
+      editStatus.className='error';
+      return;
+    }
+    const dateIso=deliveryDateISO(editingOrder);
+    if(!dateIso){
+      editStatus.textContent='Non è stato possibile determinare la data della consegna.';
+      editStatus.className='error';
+      return;
+    }
+    const saveBtn=el('saveClientEditBtn');
+    saveBtn.disabled=true;
+    editStatus.textContent='Salvataggio...';
+    editStatus.className='muted';
+    const {data:sessionData}=await db.auth.getSession();
+    const token=sessionData?.session?.access_token;
+    if(!token){
+      saveBtn.disabled=false;
+      editStatus.textContent='Sessione scaduta. Accedi di nuovo.';
+      editStatus.className='error';
+      return;
+    }
+    try{
+      const response=await fetch('/api/update-order-status',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({
+          action:'client_edit',
+          order_id:editingOrder.id,
+          sender_name:sender,
+          receiver_name:receiver,
+          package_description:editNotes.value.trim(),
+          time_from:from,
+          time_to:to
+        })
+      });
+      const text=await response.text();
+      let result={};
+      try{result=text?JSON.parse(text):{}}catch{result={error:text||'Risposta server non valida'}}
+      if(!response.ok)throw new Error(result.error||'Impossibile salvare le modifiche.');
+      const idx=allOrders.findIndex(o=>String(o.id)===String(editingOrder.id));
+      if(idx>=0)allOrders[idx]={...allOrders[idx],sender_name:result.sender_name,receiver_name:result.receiver_name,package_description:result.package_description,delivery_slot:result.delivery_slot};
+      editStatus.textContent='Modifiche salvate.';
+      editStatus.className='success';
+      render();
+      setTimeout(closeEditModal,650);
+    }catch(error){
+      editStatus.textContent='Errore: '+error.message;
+      editStatus.className='error';
+    }finally{
+      saveBtn.disabled=false;
+    }
+  });
 
   setCurrentMonth();
   applyBtn.onclick=render;
