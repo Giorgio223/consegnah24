@@ -81,7 +81,7 @@
     <div class="modalHead">
       <div>
         <h2 id="clientEditTitle" style="margin:0">Modifica consegna</h2>
-        <p class="muted" style="margin:6px 0 0">Puoi aggiornare nomi, note e orario della consegna.</p>
+        <p class="muted" style="margin:6px 0 0">Puoi aggiornare nomi, note, data e orario della consegna.</p>
       </div>
       <button class="x" type="button" id="closeClientEditModal" aria-label="Chiudi">×</button>
     </div>
@@ -94,6 +94,10 @@
         <div class="field">
           <label for="clientEditReceiverName">Nome e cognome destinatario</label>
           <input id="clientEditReceiverName" autocomplete="name" required>
+        </div>
+        <div class="field full">
+          <label for="clientEditDate">Data della consegna</label>
+          <input id="clientEditDate" type="date" required>
         </div>
         <div class="field">
           <label for="clientEditTimeFrom">Dalle</label>
@@ -108,7 +112,6 @@
           <textarea id="clientEditNotes" placeholder="Note sulla consegna"></textarea>
         </div>
       </div>
-      <p class="muted" id="clientEditDateLabel"></p>
       <p id="clientEditStatus"></p>
       <div class="orderActions">
         <button class="btn yellow" type="submit" id="saveClientEditBtn">Salva modifiche</button>

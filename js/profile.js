@@ -17,10 +17,10 @@
   const editForm=el('clientEditForm');
   const editSenderName=el('clientEditSenderName');
   const editReceiverName=el('clientEditReceiverName');
+  const editDate=el('clientEditDate');
   const editTimeFrom=el('clientEditTimeFrom');
   const editTimeTo=el('clientEditTimeTo');
   const editNotes=el('clientEditNotes');
-  const editDateLabel=el('clientEditDateLabel');
   const editStatus=el('clientEditStatus');
 
   function editableOrder(order){
@@ -52,8 +52,8 @@
     editTimeFrom.value=from;
     editTimeTo.value=to;
     editNotes.value=order.package_description||'';
-    const planned=deliveryDate(order);
-    editDateLabel.textContent=planned?`Data della consegna: ${formatOnlyDate(planned)} (la data non viene modificata)`:'Data della consegna invariata.';
+    editDate.value=deliveryDateISO(order);
+    editDate.min=dateInputValue(new Date());
     editStatus.textContent='';
     editStatus.className='';
     editModal.classList.add('show');
@@ -173,9 +173,10 @@
     }
     const sender=editSenderName.value.trim();
     const receiver=editReceiverName.value.trim();
+    const dateIso=editDate.value;
     const from=editTimeFrom.value;
     const to=editTimeTo.value;
-    if(!sender||!receiver||!from||!to){
+    if(!sender||!receiver||!dateIso||!from||!to){
       editStatus.textContent='Compila tutti i campi obbligatori.';
       editStatus.className='error';
       return;
@@ -185,11 +186,20 @@
       editStatus.className='error';
       return;
     }
-    const dateIso=deliveryDateISO(editingOrder);
-    if(!dateIso){
-      editStatus.textContent='Non è stato possibile determinare la data della consegna.';
+    const today=dateInputValue(new Date());
+    if(dateIso<today){
+      editStatus.textContent='La data della consegna non può essere nel passato.';
       editStatus.className='error';
       return;
+    }
+    if(dateIso===today){
+      const now=new Date();
+      const currentTime=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      if(from<currentTime){
+        editStatus.textContent="Per oggi, l'orario iniziale non può essere nel passato.";
+        editStatus.className='error';
+        return;
+      }
     }
     const saveBtn=el('saveClientEditBtn');
     saveBtn.disabled=true;
@@ -213,6 +223,7 @@
           sender_name:sender,
           receiver_name:receiver,
           package_description:editNotes.value.trim(),
+          delivery_date:dateIso,
           time_from:from,
           time_to:to
         })

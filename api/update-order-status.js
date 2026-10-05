@@ -30,19 +30,21 @@ module.exports = async (req, res) => {
       const senderName = String(req.body?.sender_name || '').trim();
       const receiverName = String(req.body?.receiver_name || '').trim();
       const notes = String(req.body?.package_description || '').trim();
+      const deliveryDate = String(req.body?.delivery_date || '').trim();
       const timeFrom = String(req.body?.time_from || '').trim();
       const timeTo = String(req.body?.time_to || '').trim();
-      const dateMatch = String(order.delivery_slot || '').match(/^(\d{4}-\d{2}-\d{2})/);
-      if (!senderName || !receiverName || !validTime(timeFrom) || !validTime(timeTo) || !dateMatch) {
+      if (!senderName || !receiverName || !/^\d{4}-\d{2}-\d{2}$/.test(deliveryDate) || !validTime(timeFrom) || !validTime(timeTo)) {
         return res.status(400).json({ error: 'Dati della consegna non validi.' });
       }
       if (timeTo <= timeFrom) return res.status(400).json({ error: "L'orario finale deve essere successivo a quello iniziale." });
+      const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+      if (deliveryDate < today) return res.status(400).json({ error: 'La data della consegna non può essere nel passato.' });
 
       const update = {
         sender_name: senderName,
         receiver_name: receiverName,
         package_description: notes,
-        delivery_slot: `${dateMatch[1]} | ${timeFrom} - ${timeTo}`,
+        delivery_slot: `${deliveryDate} | ${timeFrom} - ${timeTo}`,
       };
       await rest('orders', {
         method: 'PATCH',
