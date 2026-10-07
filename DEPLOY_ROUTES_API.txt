@@ -1,0 +1,24 @@
+CONSEGNA24 — CALCOLO DISTANZA SU STRADA (GOOGLE ROUTES API)
+
+Questa versione NON usa più la distanza in linea d’aria per il preventivo.
+Il prezzo viene calcolato sulla distanza del percorso automobilistico restituito da Google Routes API.
+
+PRIMA DEL DEPLOY:
+1. Apri Google Cloud Console nello stesso progetto della chiave Google Maps già usata dal sito.
+2. Vai in API e servizi > Libreria.
+3. Cerca "Routes API" e premi Abilita.
+4. Controlla che la chiave usata in index.html sia autorizzata a usare Maps JavaScript API, Places API e Routes API.
+5. Mantieni la restrizione HTTP referrer della chiave al tuo dominio/Vercel.
+6. Carica il contenuto della cartella consegnah24-main nella root GitHub e fai deploy Vercel.
+
+TEST RAPIDO:
+- Inserisci due indirizzi reali.
+- Il riepilogo deve mostrare "X,X km su strada".
+- La linea gialla sulla mappa deve seguire le strade.
+- Se Routes API non è abilitata, il sito NON ripiega sulla distanza in linea d’aria: mostra un errore, così non rischia di sottoprezzare una consegna.
+
+TARIFFE: INVARIATE.
+- Tariffa nuova: €11,99 fino a 10 km + €1/km oltre 10 km.
+- Tariffa storica: logica esistente invariata.
+
+SERVERLESS FUNCTIONS: restano 12. Nessuna nuova funzione /api è stata aggiunta.
