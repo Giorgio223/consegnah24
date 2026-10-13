@@ -10,6 +10,9 @@ let billingResult=null;
   if(u.email!==ADMIN_EMAIL){location.href='/profilo.html';return}
 
   el('logoutBtn').onclick=logout;
+  el('airPreview').onclick=previewAirReprice;
+  el('airExport').onclick=exportAirReprice;
+  el('airApply').onclick=applyAirReprice;
   el('search').oninput=render;
   el('filter').onchange=render;
   el('deliveredForm').onsubmit=saveDelivered;
@@ -410,4 +413,46 @@ async function changeStatus(sel){
 async function saveDelivered(e){
   e.preventDefault();const note=el('deliveredToInput').value.trim();if(!note)return;
   try{const{data:s}=await db.auth.getSession(),r=await fetch('/api/update-order-status',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.session?.access_token},body:JSON.stringify({order_id:pendingId,status:'consegnato!',delivered_to:note})}),j=await parseApiJson(r);if(!r.ok)throw Error(j.error||'Errore consegna');el('deliveredModal').classList.remove('show');pendingId=null;await load()}catch(err){el('deliveredStatus').textContent=err.message}
+}
+
+// Historical repricing: explicit admin preview and confirmation; no automatic mutation.
+let airRepriceRows=[];
+const airAllowed=new Set(['info@bull.bo.it','info@flowermarket.it']);
+function airDistanceKm(a,b){const r=x=>x*Math.PI/180,lat1=r(a.lat),lat2=r(b.lat),dl=r(b.lng-a.lng),h=Math.sin((lat2-lat1)/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dl/2)**2;return 12742*Math.atan2(Math.sqrt(h),Math.sqrt(Math.max(0,1-h)))}
+function geocodeForAir(address){return new Promise((resolve,reject)=>{new google.maps.Geocoder().geocode({address,componentRestrictions:{country:'IT'}},(results,status)=>{if(status==='OK'&&results?.[0]?.geometry?.location){const l=results[0].geometry.location;resolve({lat:l.lat(),lng:l.lng()})}else reject(Error('Geocodifica: '+status))})})}
+const airWait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function previewAirReprice(){
+ const status=el('airStatus');airRepriceRows=[];el('airApply').disabled=true;el('airExport').disabled=true;el('airResults').textContent='';
+ try{
+  if(!window.google?.maps?.Geocoder)throw Error('Google Geocoder non disponibile');
+  // Fetch every page: do not silently skip records when more than 1000 orders exist.
+  const found=[];
+  for(const email of airAllowed){for(let from=0;from<100000;from+=500){const {data,error}=await db.from('orders').select('id,user_email,created_at,pickup_address,delivery_address,price,payment_status,status').eq('user_email',email).gte('created_at','2026-10-08T00:00:00+02:00').order('created_at',{ascending:true}).range(from,from+499);if(error)throw error;found.push(...(data||[]));if((data||[]).length<500)break;}}
+  status.textContent=`Calcolo ${found.length} ordini…`;
+  const cache=new Map();async function coords(address){if(!cache.has(address)){cache.set(address,await geocodeForAir(address));await airWait(90)}return cache.get(address)}
+  for(const [i,o] of found.entries()){
+   const row={id:o.id,email:o.user_email,created_at:o.created_at,old:Number(o.price),payment:o.payment_status,status:o.status,km:null,price:null,error:''};
+   try{if(!o.pickup_address||!o.delivery_address)throw Error('Indirizzo mancante');const a=await coords(o.pickup_address),b=await coords(o.delivery_address);row.km=airDistanceKm(a,b);row.price=Number(Math.max(8.99,row.km*.9).toFixed(2));}catch(e){row.error=e.message}
+   airRepriceRows.push(row);status.textContent=`Elaborati ${i+1}/${found.length}`;
+  }
+  const valid=airRepriceRows.filter(r=>r.price!==null),failed=airRepriceRows.length-valid.length;
+  const total=valid.reduce((n,r)=>n+r.price-r.old,0);
+  status.textContent=`${valid.length} calcolati, ${failed} errori. Differenza totale: ${euro(total)}. Controlla CSV prima di confermare.`;
+  el('airResults').innerHTML='<table style="width:100%"><thead><tr><th>Cliente</th><th>Ordine</th><th>Vecchio</th><th>Nuovo</th><th>Km aria</th><th>Esito</th></tr></thead><tbody>'+airRepriceRows.map(r=>`<tr><td>${esc(r.email)}</td><td>${esc(r.id)}</td><td>${euro(r.old)}</td><td>${r.price===null?'—':euro(r.price)}</td><td>${r.km===null?'—':r.km.toFixed(2)}</td><td>${esc(r.error||'OK')}</td></tr>`).join('')+'</tbody></table>';
+  el('airExport').disabled=!airRepriceRows.length;el('airApply').disabled=!valid.length;
+ }catch(e){status.textContent='Errore: '+e.message}
+}
+function exportAirReprice(){const lines=[['id','email','created_at','old_price','new_price','km_air','error'],...airRepriceRows.map(r=>[r.id,r.email,r.created_at,r.old,r.price??'',r.km??'',r.error])];const csv=lines.map(a=>a.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const url=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='controllo_ricalcolo_aria_2026-10-08.csv';a.click();URL.revokeObjectURL(url)}
+async function applyAirReprice(){
+ const valid=airRepriceRows.filter(r=>r.price!==null);
+ if(!valid.length||!confirm(`Confermi la modifica del prezzo di ${valid.length} ordini? Prima scarica il CSV per archivio.`))return;
+ el('airApply').disabled=true;let updated=0,failed=[];
+ for(const row of valid){
+  // Compare old price and account to prevent overwriting concurrent changes.
+  const {data,error}=await db.from('orders').update({price:row.price}).eq('id',row.id).eq('user_email',row.email).eq('price',row.old).gte('created_at','2026-10-08T00:00:00+02:00').select('id');
+  if(error||!data?.length)failed.push(row.id+': '+(error?.message||'prezzo modificato nel frattempo'));else updated++;
+  el('airStatus').textContent=`Aggiornati ${updated}/${valid.length}, errori ${failed.length}`;
+ }
+ el('airStatus').textContent=`Completato: ${updated} aggiornati. ${failed.length} non aggiornati. ${failed.slice(0,8).join('; ')}`;
+ airRepriceRows=[];await load();
 }

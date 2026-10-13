@@ -80,6 +80,15 @@
       <p class="clientSecurityNote">La modifica viene eseguita sul server. La chiave Supabase service role non viene mai inviata al browser.</p>
     </section>
 
+    <section class="clientManagerPanel" id="ricalcoloAria" style="margin:22px 0">
+      <h2>Ricalcolo ordini · distanza in linea d’aria</h2>
+      <p class="muted">Solo info@bull.bo.it e info@flowermarket.it. Ordini creati dal 08/10/2026. Anteprima prima di salvare; nessuna modifica agli altri clienti.</p>
+      <button type="button" class="btn yellow" id="airPreview">Calcola anteprima</button>
+      <button type="button" class="btn ghost" id="airExport" disabled>Scarica CSV controllo</button>
+      <button type="button" class="btn primary" id="airApply" disabled>Conferma ricalcolo</button>
+      <p id="airStatus" class="muted"></p>
+      <div id="airResults" style="max-height:400px;overflow:auto"></div>
+    </section>
     <div class="adminToolbar"><input class="btn ghost" id="search" placeholder="Cerca cliente, telefono, indirizzo..."><select class="btn ghost" id="filter"><option value="">Tutti gli stati</option><option value="Il corriere non è ancora partito">Non ancora partito</option><option value="Il corriere ha visto l'ordine e sta arrivando">Corriere in arrivo</option><option value="in consegna">In consegna</option><option value="consegnato!">Consegnato</option><option value="annullato">Annullato</option></select></div>
     <div id="orders" class="ordersGrid"></div>
   </div>
@@ -105,6 +114,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="/js/config.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2MiuCHJqe8PgJENHPuoyakgHivypH7Nw&libraries=geocoding"></script>
 <script src="/js/admin.js"></script>
 </body>
 </html>

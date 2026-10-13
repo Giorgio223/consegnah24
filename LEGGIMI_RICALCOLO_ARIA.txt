@@ -1,0 +1,11 @@
+CONSEGNA24 - Distanza in linea d'aria per BULL BO / FLOWERMARKET
+
+1. Pubblica il contenuto della cartella consegnah24-main su GitHub e attendi Vercel Ready.
+2. Per i due account info@bull.bo.it e info@flowermarket.it, i NUOVI preventivi usano Haversine (linea d'aria) e tariffa storica max(8,99 EUR, km * 0,90 EUR).
+3. Per tutti gli altri account resta Google Routes su strada con la loro tariffa corrente.
+4. In Admin -> Ricalcolo ordini, premi 'Calcola anteprima'. Vengono esaminati gli ordini creati dall'08/10/2026 (00:00, ora italiana), inclusi quelli consegnati, dei soli due indirizzi email.
+5. Controlla la tabella e scarica CSV PRIMA di confermare. Gli indirizzi non geocodificabili vengono saltati.
+6. Premi 'Conferma ricalcolo' per salvare i prezzi nel database. L'operazione NON e' automatica al deploy.
+7. Se la policy RLS di Supabase non consente la modifica degli ordini dall'account amministratore, appariranno errori: non disabilitare RLS. E' necessaria una soluzione backend con autorizzazione admin.
+8. Il prezzo viene aggiornato in orders.price. Eventuali fatture gia' emesse vanno verificate manualmente. Nessun rimborso Stripe viene eseguito.
+9. Verifica i valori con alcuni ordini campione: i vecchi ordini non conservano le coordinate originali, e la geocodifica attuale potrebbe differire dalla selezione originaria.
